@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using JalbacApi.Models;
-using JalbacApi.Models.Dto.ClienteDtos;
+using JalbacApi.Models.Dto.UsuarioDtos;
 using JalbacApi.Repositorio.IRepositorio;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -11,28 +11,28 @@ namespace JalbacApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ClienteController : ControllerBase
+    public class UsuarioController : ControllerBase
     {
         private readonly IMapper _mapper;
-        private readonly IClienteRepositorio _clienteRepositorio;
+        private readonly IUsuarioRepositorio _usuarioRepositorio;
         protected APIResponse _response;
-        public ClienteController(IMapper mapper, IClienteRepositorio clienteRepositorio)
+        public UsuarioController(IMapper mapper, IUsuarioRepositorio usuarioRepositorio)
         {
             _mapper = mapper;
-            _clienteRepositorio = clienteRepositorio;
-            _response = new ();
+            _usuarioRepositorio = usuarioRepositorio;
+            _response = new();
         }
 
         [HttpGet]
         [ProducesResponseType(200)]
-        public async Task<ActionResult<APIResponse>> GetClientes()
+        public async Task<ActionResult<APIResponse>> GetUsuarios()
         {
             try
             {
-                IEnumerable<Cliente> clientesList = await _clienteRepositorio.ObtenerTodos();
+                IEnumerable<Usuario> usuariosList = await _usuarioRepositorio.ObtenerTodos(incluirPropiedades: "IdRolNavigation");
 
 
-                _response.Resultado = _mapper.Map<IEnumerable<ClienteDto>>(clientesList);
+                _response.Resultado = _mapper.Map<IEnumerable<UsuarioDto>>(usuariosList);
                 _response.statusCode = HttpStatusCode.OK;
                 _response.IsExistoso = true;
 
@@ -48,12 +48,12 @@ namespace JalbacApi.Controllers
             return _response;
         }
 
-        [HttpGet("{id:int}", Name = "GetCliente")]
+        [HttpGet("{id:int}", Name = "GetUsuario")]
 
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<APIResponse>> GetCliente(int id)
+        public async Task<ActionResult<APIResponse>> GetUsuario(int id)
         {
             try
             {
@@ -64,16 +64,16 @@ namespace JalbacApi.Controllers
                     return BadRequest(_response);
                 }
 
-                var cliente = await _clienteRepositorio.Obtener(c => c.IdCliente == id);
+                var usuario = await _usuarioRepositorio.Obtener(c => c.IdUsuario == id, incluirPropiedades: "IdRolNavigation", tracked: false);
 
-                if (cliente == null)
+                if (usuario == null)
                 {
                     _response.statusCode = HttpStatusCode.NotFound;
                     _response.IsExistoso = false;
                     return NotFound(_response);
                 }
 
-                _response.Resultado = _mapper.Map<ClienteDto>(cliente);
+                _response.Resultado = _mapper.Map<UsuarioDto>(usuario);
                 _response.IsExistoso = true;
                 _response.statusCode = HttpStatusCode.OK;
 
@@ -93,7 +93,7 @@ namespace JalbacApi.Controllers
         [ProducesResponseType(201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<APIResponse>> CrearCliente([FromBody] ClienteCreateDto model)
+        public async Task<ActionResult<APIResponse>> CrearUsuario([FromBody] UsuarioCreateDto model)
         {
             if (!ModelState.IsValid)
             {
@@ -105,21 +105,21 @@ namespace JalbacApi.Controllers
                 return BadRequest(model);
             }
 
-            Cliente cliente = _mapper.Map<Cliente>(model);
+            Usuario usuario = _mapper.Map<Usuario>(model);
 
-            await _clienteRepositorio.Crear(cliente);
+            await _usuarioRepositorio.CrearUsuario(usuario);
             _response.IsExistoso = true;
-            _response.Resultado = cliente;
+            _response.Resultado = usuario;
             _response.statusCode = HttpStatusCode.Created;
 
-            return CreatedAtRoute("GetCliente", new { id = cliente.IdCliente }, _response);
+            return CreatedAtRoute("GetUsuario", new { id = usuario.IdUsuario }, _response);
 
         }
 
         [HttpPut("{id:int}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
-        public async Task<ActionResult<APIResponse>> EditarCliente(int id, [FromBody] ClienteUpdateDto model)
+        public async Task<ActionResult<APIResponse>> EditarUsuario(int id, [FromBody] UsuarioUpdateDto model)
         {
             if (model == null || id == 0)
             {
@@ -128,12 +128,12 @@ namespace JalbacApi.Controllers
                 return BadRequest(_response);
             }
 
-            Cliente cliente = _mapper.Map<Cliente>(model);
+            Usuario usuario = _mapper.Map<Usuario>(model);
 
-            await _clienteRepositorio.Editar(cliente);
+            await _usuarioRepositorio.Editar(usuario);
 
             _response.IsExistoso = true;
-            _response.Resultado = cliente;
+            _response.Resultado = usuario;
             _response.statusCode = HttpStatusCode.NoContent;
 
             return Ok(_response);
@@ -143,7 +143,7 @@ namespace JalbacApi.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<APIResponse>> EliminarCliente(int id)
+        public async Task<ActionResult<APIResponse>> EliminarUsuario(int id)
         {
             if (id == 0)
             {
@@ -152,21 +152,43 @@ namespace JalbacApi.Controllers
                 return BadRequest(_response);
             }
 
-            var cliente = await _clienteRepositorio.Obtener(c => c.IdCliente == id);
+            var usuario = await _usuarioRepositorio.Obtener(c => c.IdUsuario == id);
 
-            if (cliente == null)
+            if (usuario == null)
             {
                 _response.IsExistoso = false;
                 _response.statusCode = HttpStatusCode.NotFound;
                 return NotFound(_response);
             }
 
-            await _clienteRepositorio.Remover(cliente);
+            await _usuarioRepositorio.Remover(usuario);
 
             _response.IsExistoso = true;
             _response.statusCode = HttpStatusCode.NoContent;
 
             return Ok(_response);
         }
+
+        [HttpPost("login")]
+
+        public async Task<IActionResult> login([FromBody] LoginRequestDto modelo)
+        {
+            var loginResponse = await _usuarioRepositorio.Login(modelo);
+            if (loginResponse.Usuario == null || loginResponse.Token == null)
+            {
+                _response.statusCode = HttpStatusCode.BadRequest;
+                _response.IsExistoso = false;
+                _response.ErrorMessages.Add("UserName o Password son incorrectos");
+
+                return BadRequest(_response);
+            }
+
+            _response.IsExistoso = true;
+            _response.statusCode = HttpStatusCode.OK;
+            _response.Resultado = loginResponse;
+
+            return Ok(_response);
+        }
     }
 }
+

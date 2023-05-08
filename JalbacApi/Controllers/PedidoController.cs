@@ -1,38 +1,39 @@
 ﻿using AutoMapper;
 using JalbacApi.Models;
 using JalbacApi.Models.Dto.ClienteDtos;
+using JalbacApi.Models.Dto.PedidoDto;
+using JalbacApi.Repositorio;
 using JalbacApi.Repositorio.IRepositorio;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Net;
 
 namespace JalbacApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ClienteController : ControllerBase
+    public class PedidoController : ControllerBase
     {
+        private readonly IPedidoRepositorio _pedidoRepositorio;
         private readonly IMapper _mapper;
-        private readonly IClienteRepositorio _clienteRepositorio;
         protected APIResponse _response;
-        public ClienteController(IMapper mapper, IClienteRepositorio clienteRepositorio)
+        public PedidoController(IPedidoRepositorio pedidoRepositorio, IMapper mapper)
         {
+            _pedidoRepositorio = pedidoRepositorio;
             _mapper = mapper;
-            _clienteRepositorio = clienteRepositorio;
-            _response = new ();
+            _response = new();
         }
 
         [HttpGet]
         [ProducesResponseType(200)]
-        public async Task<ActionResult<APIResponse>> GetClientes()
+        public async Task<ActionResult<APIResponse>> GetPedidos()
         {
             try
             {
-                IEnumerable<Cliente> clientesList = await _clienteRepositorio.ObtenerTodos();
+                IEnumerable<Pedido> pedidosList = await _pedidoRepositorio.ObtenerTodos(incluirPropiedades: "IdClienteNavigation,IdEstadoNavigation");
 
 
-                _response.Resultado = _mapper.Map<IEnumerable<ClienteDto>>(clientesList);
+                _response.Resultado = _mapper.Map<IEnumerable<PedidoDto>>(pedidosList);
                 _response.statusCode = HttpStatusCode.OK;
                 _response.IsExistoso = true;
 
@@ -48,12 +49,12 @@ namespace JalbacApi.Controllers
             return _response;
         }
 
-        [HttpGet("{id:int}", Name = "GetCliente")]
+        [HttpGet("{id:int}", Name = "GetPedido")]
 
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<APIResponse>> GetCliente(int id)
+        public async Task<ActionResult<APIResponse>> GetPedido(int id)
         {
             try
             {
@@ -64,16 +65,16 @@ namespace JalbacApi.Controllers
                     return BadRequest(_response);
                 }
 
-                var cliente = await _clienteRepositorio.Obtener(c => c.IdCliente == id);
+                var pedido = await _pedidoRepositorio.Obtener(c => c.IdPedido == id, tracked: false);
 
-                if (cliente == null)
+                if (pedido == null)
                 {
                     _response.statusCode = HttpStatusCode.NotFound;
                     _response.IsExistoso = false;
                     return NotFound(_response);
                 }
 
-                _response.Resultado = _mapper.Map<ClienteDto>(cliente);
+                _response.Resultado = _mapper.Map<PedidoDto>(pedido);
                 _response.IsExistoso = true;
                 _response.statusCode = HttpStatusCode.OK;
 
@@ -93,7 +94,7 @@ namespace JalbacApi.Controllers
         [ProducesResponseType(201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<APIResponse>> CrearCliente([FromBody] ClienteCreateDto model)
+        public async Task<ActionResult<APIResponse>> CrearPedido([FromBody] PedidoCreateDto model)
         {
             if (!ModelState.IsValid)
             {
@@ -105,21 +106,21 @@ namespace JalbacApi.Controllers
                 return BadRequest(model);
             }
 
-            Cliente cliente = _mapper.Map<Cliente>(model);
+            Pedido pedido = _mapper.Map<Pedido>(model);
 
-            await _clienteRepositorio.Crear(cliente);
+            await _pedidoRepositorio.CrearPedido(pedido);
             _response.IsExistoso = true;
-            _response.Resultado = cliente;
+            _response.Resultado = pedido;
             _response.statusCode = HttpStatusCode.Created;
 
-            return CreatedAtRoute("GetCliente", new { id = cliente.IdCliente }, _response);
+            return CreatedAtRoute("GetCliente", new { id = pedido.IdPedido }, _response);
 
         }
 
         [HttpPut("{id:int}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
-        public async Task<ActionResult<APIResponse>> EditarCliente(int id, [FromBody] ClienteUpdateDto model)
+        public async Task<ActionResult<APIResponse>> EditarPedido(int id, [FromBody] PedidoUpdateDto model)
         {
             if (model == null || id == 0)
             {
@@ -128,12 +129,12 @@ namespace JalbacApi.Controllers
                 return BadRequest(_response);
             }
 
-            Cliente cliente = _mapper.Map<Cliente>(model);
+            Pedido pedido = _mapper.Map<Pedido>(model);
 
-            await _clienteRepositorio.Editar(cliente);
+            await _pedidoRepositorio.Editar(pedido);
 
             _response.IsExistoso = true;
-            _response.Resultado = cliente;
+            _response.Resultado = pedido;
             _response.statusCode = HttpStatusCode.NoContent;
 
             return Ok(_response);
@@ -143,7 +144,7 @@ namespace JalbacApi.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<APIResponse>> EliminarCliente(int id)
+        public async Task<ActionResult<APIResponse>> EliminarPedido(int id)
         {
             if (id == 0)
             {
@@ -152,16 +153,16 @@ namespace JalbacApi.Controllers
                 return BadRequest(_response);
             }
 
-            var cliente = await _clienteRepositorio.Obtener(c => c.IdCliente == id);
+            var pedido = await _pedidoRepositorio.Obtener(c => c.IdPedido == id);
 
-            if (cliente == null)
+            if (pedido == null)
             {
                 _response.IsExistoso = false;
                 _response.statusCode = HttpStatusCode.NotFound;
                 return NotFound(_response);
             }
 
-            await _clienteRepositorio.Remover(cliente);
+            await _pedidoRepositorio.Remover(pedido);
 
             _response.IsExistoso = true;
             _response.statusCode = HttpStatusCode.NoContent;
