@@ -1,4 +1,4 @@
-﻿namespace JalbacApi.Models.Dto.PedidoDto
+﻿namespace JalbacApi.Models.Dto.PedidoDtos
 {
     public class PedidoCreateDto
     {

@@ -25,8 +25,6 @@ public partial class DetallePedido
 
     public string Material { get; set; } = null!;
 
-    public string Modelo { get; set; } = null!;
-
     public string Detalle { get; set; } = null!;
 
     public string MotivoDevolucion { get; set; } = null!;

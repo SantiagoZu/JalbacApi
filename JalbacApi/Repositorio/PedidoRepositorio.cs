@@ -1,5 +1,5 @@
 ﻿using JalbacApi.Models;
-using JalbacApi.Models.Dto.PedidoDto;
+using JalbacApi.Models.Dto.PedidoDtos;
 using JalbacApi.Repositorio.IRepositorio;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

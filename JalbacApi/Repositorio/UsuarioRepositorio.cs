@@ -36,8 +36,8 @@ namespace JalbacApi.Repositorio
 
         public async Task<LoginResponseDto> Login(LoginRequestDto loginRequestDto)
         {
-            var usuario = await _db.Usuarios.FirstOrDefaultAsync(u => u.Correo.ToLower() == loginRequestDto.Correo.ToLower()
-                                                            && u.Contrasena == loginRequestDto.Contrasena);
+            var usuario = await _db.Usuarios.FirstOrDefaultAsync(u => u.Correo.ToLower() == loginRequestDto.Correo.ToLower());
+
 
             if (usuario == null)
             {
@@ -48,27 +48,40 @@ namespace JalbacApi.Repositorio
                 };
             }
 
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(secretKey);
-            var tokenDescriptor = new SecurityTokenDescriptor
+            var passwordHasher = new PasswordHasher<Usuario>();
+
+            var contrasenaCorrecta = passwordHasher.VerifyHashedPassword(null, usuario.Contrasena, loginRequestDto.Contrasena);
+            if (contrasenaCorrecta == PasswordVerificationResult.Success)
             {
-                Subject = new ClaimsIdentity(new Claim[]
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = Encoding.ASCII.GetBytes(secretKey);
+                var tokenDescriptor = new SecurityTokenDescriptor
                 {
-                   new Claim(ClaimTypes.Name, usuario.IdUsuario.ToString()),
-                   new Claim(ClaimTypes.Role, usuario.IdRolNavigation.Nombre)
-                }),
-                Expires = DateTime.UtcNow.AddDays(7),
-                SigningCredentials = new(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
-            };
+                    Subject = new ClaimsIdentity(new Claim[]
+                    {
+                    new Claim(ClaimTypes.Name, usuario.IdUsuario.ToString()),
+                    new Claim(ClaimTypes.Role, usuario.IdRol.ToString())
+                    }),
+                    Expires = DateTime.UtcNow.AddDays(7),
+                    SigningCredentials = new(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
 
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            LoginResponseDto loginResponse = new()
+                };
+
+                var token = tokenHandler.CreateToken(tokenDescriptor);
+                return new LoginResponseDto()
+                {
+                    Token = tokenHandler.WriteToken(token),
+                    Usuario = usuario,
+                };
+            }
+            else
             {
-                Token = tokenHandler.WriteToken(token),
-                Usuario = usuario
-            };
-
-            return loginResponse;
+                return new LoginResponseDto()
+                {
+                    Token = "",
+                    Usuario = null
+                };
+            }
         }
     }
 }

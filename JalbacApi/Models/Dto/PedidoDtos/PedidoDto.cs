@@ -1,7 +1,7 @@
 ﻿using JalbacApi.Models.Dto.ClienteDtos;
 using JalbacApi.Models.Dto.EstadoDtos;
 
-namespace JalbacApi.Models.Dto.PedidoDto
+namespace JalbacApi.Models.Dto.PedidoDtos
 {
     public class PedidoDto
     {

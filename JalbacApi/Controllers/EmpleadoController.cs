@@ -1,42 +1,42 @@
 ﻿using AutoMapper;
 using JalbacApi.Models;
-using JalbacApi.Models.Dto.UsuarioDtos;
+using JalbacApi.Models.Dto.ClienteDtos;
+using JalbacApi.Models.Dto.EmpleadoDtos;
+using JalbacApi.Models.Dto.PedidoDtos;
+using JalbacApi.Repositorio;
 using JalbacApi.Repositorio.IRepositorio;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Net;
 
 namespace JalbacApi.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
-    public class UsuarioController : ControllerBase
+    public class EmpleadoController : ControllerBase
     {
-        private readonly IMapper _mapper;
-        private readonly IUsuarioRepositorio _usuarioRepositorio;
         private readonly IEmpleadoRepositorio _empleadoRepositorio;
+        private readonly IMapper _mapper;
         protected APIResponse _response;
-        public UsuarioController(IMapper mapper, IUsuarioRepositorio usuarioRepositorio, IEmpleadoRepositorio empleadoRepositorio)
+        public EmpleadoController(IEmpleadoRepositorio empleadoRepositorio, IMapper mapper)
         {
-            _mapper = mapper;
-            _usuarioRepositorio = usuarioRepositorio;
             _empleadoRepositorio = empleadoRepositorio;
+            _mapper = mapper;
             _response = new();
         }
 
-        [Authorize]
         [HttpGet]
         [ProducesResponseType(200)]
-        public async Task<ActionResult<APIResponse>> GetUsuarios()
+        public async Task<ActionResult<APIResponse>> GetEmpleados()
         {
             try
             {
-                IEnumerable<Usuario> usuariosList = await _usuarioRepositorio.ObtenerTodos(incluirPropiedades: "IdRolNavigation");
+                IEnumerable<Empleado> empleadosList = await _empleadoRepositorio.ObtenerTodos(incluirPropiedades: "IdUsuarioNavigation");
 
 
-                _response.Resultado = _mapper.Map<IEnumerable<UsuarioDto>>(usuariosList);
+                _response.Resultado = _mapper.Map<IEnumerable<EmpleadoDto>>(empleadosList);
                 _response.statusCode = HttpStatusCode.OK;
                 _response.IsExistoso = true;
 
@@ -52,12 +52,12 @@ namespace JalbacApi.Controllers
             return _response;
         }
 
-        [HttpGet("{id:int}", Name = "GetUsuario")]
-        [Authorize]
+        [HttpGet("{id:int}", Name = "GetEmpleado")]
+
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<APIResponse>> GetUsuario(int id)
+        public async Task<ActionResult<APIResponse>> GetEmpleado(int id)
         {
             try
             {
@@ -68,16 +68,16 @@ namespace JalbacApi.Controllers
                     return BadRequest(_response);
                 }
 
-                var usuario = await _usuarioRepositorio.Obtener(c => c.IdUsuario == id, incluirPropiedades: "IdRolNavigation", tracked: false);
+                var empleado = await _empleadoRepositorio.Obtener(c => c.IdEmpleado == id, tracked: false, incluirPropiedades: "IdUsuarioNavigation");
 
-                if (usuario == null)
+                if (empleado == null)
                 {
                     _response.statusCode = HttpStatusCode.NotFound;
                     _response.IsExistoso = false;
                     return NotFound(_response);
                 }
 
-                _response.Resultado = _mapper.Map<UsuarioDto>(usuario);
+                _response.Resultado = _mapper.Map<EmpleadoDto>(empleado);
                 _response.IsExistoso = true;
                 _response.statusCode = HttpStatusCode.OK;
 
@@ -94,11 +94,10 @@ namespace JalbacApi.Controllers
         }
 
         [HttpPost]
-        [Authorize]
         [ProducesResponseType(201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<APIResponse>> CrearUsuario([FromBody] UsuarioCreateDto model)
+        public async Task<ActionResult<APIResponse>> CrearEmpleado([FromBody] EmpleadoCreateDto model)
         {
             if (!ModelState.IsValid)
             {
@@ -110,33 +109,21 @@ namespace JalbacApi.Controllers
                 return BadRequest(model);
             }
 
-            Usuario usuario = _mapper.Map<Usuario>(model);
-            await _usuarioRepositorio.CrearUsuario(usuario);
+            Empleado empleado = _mapper.Map<Empleado>(model);
 
-            Empleado empleado = new()
-            {
-                IdUsuario = usuario.IdUsuario,
-                Estado = true,
-                Documento = usuario.IdUsuario.ToString(),
-                Nombre = "",
-                Apellido = "",
-                Cargo = "",
-            };
             await _empleadoRepositorio.Crear(empleado);
-
             _response.IsExistoso = true;
-            _response.Resultado = usuario;
+            _response.Resultado = empleado;
             _response.statusCode = HttpStatusCode.Created;
 
-            return CreatedAtRoute("GetUsuario", new { id = usuario.IdUsuario }, _response);
+            return CreatedAtRoute("GetEmpleado", new { id = empleado.IdEmpleado }, _response);
 
         }
 
         [HttpPut("{id:int}")]
-        [Authorize]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
-        public async Task<ActionResult<APIResponse>> EditarUsuario(int id, [FromBody] UsuarioUpdateDto model)
+        public async Task<ActionResult<APIResponse>> EditarEmpleado(int id, [FromBody] EmpleadoUpdateDto model)
         {
             if (model == null || id == 0)
             {
@@ -145,23 +132,22 @@ namespace JalbacApi.Controllers
                 return BadRequest(_response);
             }
 
-            Usuario usuario = _mapper.Map<Usuario>(model);
+            Empleado empleado = _mapper.Map<Empleado>(model);
 
-            await _usuarioRepositorio.Editar(usuario);
+            await _empleadoRepositorio.Editar(empleado);
 
             _response.IsExistoso = true;
-            _response.Resultado = usuario;
+            _response.Resultado = empleado;
             _response.statusCode = HttpStatusCode.NoContent;
 
             return Ok(_response);
         }
 
         [HttpDelete("{id:int}")]
-        [Authorize]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<APIResponse>> EliminarUsuario(int id)
+        public async Task<ActionResult<APIResponse>> EliminarEmpleado(int id)
         {
             if (id == 0)
             {
@@ -170,43 +156,21 @@ namespace JalbacApi.Controllers
                 return BadRequest(_response);
             }
 
-            var usuario = await _usuarioRepositorio.Obtener(c => c.IdUsuario == id);
+            var pedido = await _empleadoRepositorio.Obtener(c => c.IdEmpleado == id);
 
-            if (usuario == null)
+            if (pedido == null)
             {
                 _response.IsExistoso = false;
                 _response.statusCode = HttpStatusCode.NotFound;
                 return NotFound(_response);
             }
 
-            await _usuarioRepositorio.Remover(usuario);
+            await _empleadoRepositorio.Remover(pedido);
 
             _response.IsExistoso = true;
             _response.statusCode = HttpStatusCode.NoContent;
 
             return Ok(_response);
         }
-
-        [HttpPost("login")]
-
-        public async Task<IActionResult> login([FromBody] LoginRequestDto modelo)
-        {
-            var loginResponse = await _usuarioRepositorio.Login(modelo);
-            if (loginResponse.Usuario == null || loginResponse.Token == null)
-            {
-                _response.statusCode = HttpStatusCode.BadRequest;
-                _response.IsExistoso = false;
-                _response.ErrorMessages.Add("UserName o Password son incorrectos");
-
-                return BadRequest(_response);
-            }
-
-            _response.IsExistoso = true;
-            _response.statusCode = HttpStatusCode.OK;
-            _response.Resultado = loginResponse;
-
-            return Ok(_response);
-        }
     }
 }
-

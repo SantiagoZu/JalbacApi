@@ -8,6 +8,7 @@ public partial class Usuario
     public int IdUsuario { get; set; }
 
     public int IdRol { get; set; }
+    public virtual Rol IdRolNavigation { get; set; } = null!;
 
     public string Correo { get; set; } = null!;
 
@@ -17,5 +18,4 @@ public partial class Usuario
 
     public virtual ICollection<Empleado> Empleados { get; set; } = new List<Empleado>();
 
-    public virtual Rol IdRolNavigation { get; set; } = null!;
 }
