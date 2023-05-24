@@ -12,17 +12,18 @@ using System.Net;
 
 namespace JalbacApi.Controllers
 {
-    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class DetallePedidoController : ControllerBase
     {
         private readonly IDetallePedidoRepositorio _detalleRepositorio;
+        private readonly IHisEstadoDetallePedidoRepositorio _hisEstadoDetallePedidoRepositorio;
         private readonly IMapper _mapper;
         protected APIResponse _response;
-        public DetallePedidoController(IDetallePedidoRepositorio detalleRepositorio, IMapper mapper)
+        public DetallePedidoController(IDetallePedidoRepositorio detalleRepositorio,IHisEstadoDetallePedidoRepositorio hisEstadoDetallePedidoRepositorio, IMapper mapper)
         {
             _detalleRepositorio = detalleRepositorio;
+            _hisEstadoDetallePedidoRepositorio = hisEstadoDetallePedidoRepositorio;
             _mapper = mapper;
             _response = new();
         }
@@ -97,7 +98,7 @@ namespace JalbacApi.Controllers
         [ProducesResponseType(201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<APIResponse>> CrearDetalle([FromBody] DetalleCreateDto model)
+        public async Task<ActionResult<APIResponse>> CrearDetalle([FromBody] List<DetalleCreateDto> model)
         {
             if (!ModelState.IsValid)
             {
@@ -109,14 +110,26 @@ namespace JalbacApi.Controllers
                 return BadRequest(model);
             }
 
-            DetallePedido detalle = _mapper.Map<DetallePedido>(model);
+            List<DetallePedido> detalles = _mapper.Map<List<DetallePedido>>(model);
 
-            await _detalleRepositorio.Crear(detalle);
+            foreach (DetallePedido detalle in detalles)
+            {
+                await _detalleRepositorio.Crear(detalle);
+                HisEstadoDetallePedido hisEstadoDetallePedido = new()
+                {
+                    IdEstado = detalle.IdEstado,
+                    IdDetallePedido = detalle.IdDetallePedido,
+
+                };
+
+                await _hisEstadoDetallePedidoRepositorio.CrearHisDetallePedido(hisEstadoDetallePedido);
+            }
+
             _response.IsExistoso = true;
-            _response.Resultado = detalle;
+            _response.Resultado = detalles;
             _response.statusCode = HttpStatusCode.Created;
 
-            return CreatedAtRoute("GetDetalle", new { id = detalle.IdDetallePedido }, _response);
+            return CreatedAtRoute("GetDetalle", new { id = detalles[0].IdDetallePedido }, _response);
 
         }
 

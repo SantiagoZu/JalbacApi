@@ -162,8 +162,8 @@ public partial class BdJalbacContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("nombre");
 
-            entity.HasOne(d => d.IdUsuarioNavigation).WithMany(p => p.Empleados)
-                .HasForeignKey(d => d.IdUsuario)
+            entity.HasOne(d => d.IdUsuarioNavigation).WithOne()
+                .HasForeignKey<Empleado>(d => d.IdUsuario)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_empleadoUsuario");
         });
@@ -198,8 +198,8 @@ public partial class BdJalbacContext : DbContext
             entity.Property(e => e.IdDetallePedido).HasColumnName("idDetallePedido");
             entity.Property(e => e.IdEstado).HasColumnName("idEstado");
 
-            entity.HasOne(d => d.IdDetallePedidoNavigation).WithMany(p => p.HisEstadoDetallePedidos)
-                .HasForeignKey(d => d.IdDetallePedido)
+            entity.HasOne(d => d.IdDetallePedidoNavigation).WithOne()
+                .HasForeignKey<HisEstadoDetallePedido>(d => d.IdDetallePedido)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_hisEstadoDetallePedidoDetallePedido");
 
@@ -227,8 +227,8 @@ public partial class BdJalbacContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_hisEstadoPedidoEstado");
 
-            entity.HasOne(d => d.IdPedidoNavigation).WithMany(p => p.HisEstadoPedidos)
-                .HasForeignKey(d => d.IdPedido)
+            entity.HasOne(d => d.IdPedidoNavigation).WithOne()
+                .HasForeignKey<HisEstadoPedido>(d => d.IdPedido)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_hisEstadoPedidoPedido");
         });

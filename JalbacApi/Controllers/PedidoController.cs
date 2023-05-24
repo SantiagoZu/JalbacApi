@@ -11,17 +11,18 @@ using System.Net;
 
 namespace JalbacApi.Controllers
 {
-    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class PedidoController : ControllerBase
     {
         private readonly IPedidoRepositorio _pedidoRepositorio;
+        private readonly IHisEstadoPedidoRepositorio _hisEstadoPedido;
         private readonly IMapper _mapper;
         protected APIResponse _response;
-        public PedidoController(IPedidoRepositorio pedidoRepositorio, IMapper mapper)
+        public PedidoController(IPedidoRepositorio pedidoRepositorio, IHisEstadoPedidoRepositorio hisEstadoPedido,IMapper mapper)
         {
             _pedidoRepositorio = pedidoRepositorio;
+            _hisEstadoPedido = hisEstadoPedido;
             _mapper = mapper;
             _response = new();
         }
@@ -67,7 +68,7 @@ namespace JalbacApi.Controllers
                     return BadRequest(_response);
                 }
 
-                var pedido = await _pedidoRepositorio.Obtener(c => c.IdPedido == id, tracked: false);
+                var pedido = await _pedidoRepositorio.Obtener(c => c.IdPedido == id, tracked: false, incluirPropiedades: "IdClienteNavigation,IdEstadoNavigation");
 
                 if (pedido == null)
                 {
@@ -109,13 +110,21 @@ namespace JalbacApi.Controllers
             }
 
             Pedido pedido = _mapper.Map<Pedido>(model);
-
             await _pedidoRepositorio.CrearPedido(pedido);
+            HisEstadoPedido hisEstadoPedido = new()
+            {
+                IdEstado = pedido.IdEstado,
+                IdPedido = pedido.IdPedido,
+
+            };
+
+            await _hisEstadoPedido.CrearHisPedido(hisEstadoPedido);
+
             _response.IsExistoso = true;
             _response.Resultado = pedido;
             _response.statusCode = HttpStatusCode.Created;
 
-            return CreatedAtRoute("GetCliente", new { id = pedido.IdPedido }, _response);
+            return CreatedAtRoute("GetPedido", new { id = pedido.IdPedido }, _response);
         }
 
         [HttpPut("{id:int}")]

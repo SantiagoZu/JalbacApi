@@ -4,6 +4,8 @@ using JalbacApi.Models.Dto.ClienteDtos;
 using JalbacApi.Models.Dto.DetallePedidoDtos;
 using JalbacApi.Models.Dto.EmpleadoDtos;
 using JalbacApi.Models.Dto.EstadoDtos;
+using JalbacApi.Models.Dto.HisEstadoDetallePedidoDtos;
+using JalbacApi.Models.Dto.HisEstadoPedidoDtos;
 using JalbacApi.Models.Dto.PedidoDtos;
 using JalbacApi.Models.Dto.RolDtos;
 using JalbacApi.Models.Dto.UsuarioDtos;
@@ -53,6 +55,12 @@ namespace JalbacApi
             CreateMap<Empleado, EmpleadoCreateDto>().ReverseMap();
             CreateMap<Empleado, EmpleadoUpdateDto>().ReverseMap();
             #endregion
+
+            #region HistorialesDto
+            CreateMap<HisEstadoPedido, HisEstadoPedidoDto>().ReverseMap();
+            CreateMap<HisEstadoDetallePedido, HisEstadoDetallePedidoDto>().ReverseMap();
+            #endregion
+
 
         }
     }
