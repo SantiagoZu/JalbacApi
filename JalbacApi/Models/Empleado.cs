@@ -8,6 +8,7 @@ public partial class Empleado
     public int IdEmpleado { get; set; }
 
     public int IdUsuario { get; set; }
+    public virtual Usuario IdUsuarioNavigation { get; set; } = null!;
 
     public bool Estado { get; set; }
 
@@ -21,5 +22,4 @@ public partial class Empleado
 
     public virtual ICollection<DetallePedido> DetallePedidos { get; set; } = new List<DetallePedido>();
 
-    public virtual Usuario IdUsuarioNavigation { get; set; } = null!;
 }

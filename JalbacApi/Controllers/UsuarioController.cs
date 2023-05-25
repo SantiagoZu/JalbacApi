@@ -3,10 +3,10 @@ using JalbacApi.Models;
 using JalbacApi.Models.Dto.UsuarioDtos;
 using JalbacApi.Repositorio.IRepositorio;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
+using Microsoft.AspNetCore.Http;
 
 namespace JalbacApi.Controllers
 {
@@ -188,11 +188,10 @@ namespace JalbacApi.Controllers
         }
 
         [HttpPost("login")]
-
         public async Task<IActionResult> login([FromBody] LoginRequestDto modelo)
         {
-            var loginResponse = await _usuarioRepositorio.Login(modelo);
-            if (loginResponse.Usuario == null || loginResponse.Token == null)
+            var loginResponse = await _usuarioRepositorio.Login(modelo, HttpContext);
+            if (loginResponse.isExitoso == false)
             {
                 _response.statusCode = HttpStatusCode.BadRequest;
                 _response.IsExistoso = false;

@@ -6,7 +6,6 @@
         {
         }
 
-        public Usuario Usuario { get; set; }
-        public string Token { get; set; }
+        public bool isExitoso { get; set; }
     }
 }

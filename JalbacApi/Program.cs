@@ -27,7 +27,9 @@ builder.Services.AddScoped<IRolRepositorio, RolRepositorio>();
 builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
 builder.Services.AddScoped<IEmpleadoRepositorio, EmpleadoRepositorio>();
 builder.Services.AddScoped<IDetallePedidoRepositorio, DetallePedidoRepositorio>();
-
+builder.Services.AddScoped<IHisEstadoDetallePedidoRepositorio, HisEstadoDetallePedidoRepositorio>();
+builder.Services.AddScoped<IHisEstadoPedidoRepositorio, HisEstadoPedidoRepositorio>();
+builder.Services.AddHttpContextAccessor();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 //builder.Services.AddEndpointsApiExplorer();
@@ -41,7 +43,13 @@ builder.Services.AddScoped<IDetallePedidoRepositorio, DetallePedidoRepositorio>(
 //});
 //builder.Services.AddSingleton<IAuthorizationHandler, PermisosRolePolicy>();
 
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("NuevaPolitica", app =>
+    {
+        app.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+    });
+});
 
 var key = builder.Configuration.GetValue<string>("ApiSettings:Secret");
 builder.Services.AddAuthentication(x =>
@@ -101,6 +109,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("NuevaPolitica");
 
 app.UseAuthentication();
 

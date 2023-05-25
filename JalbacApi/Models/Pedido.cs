@@ -18,7 +18,6 @@ public partial class Pedido
 
     public virtual ICollection<DetallePedido> DetallePedidos { get; set; } = new List<DetallePedido>();
 
-    public virtual ICollection<HisEstadoPedido> HisEstadoPedidos { get; set; } = new List<HisEstadoPedido>();
 
     public virtual Cliente IdClienteNavigation { get; set; } = null!;
 

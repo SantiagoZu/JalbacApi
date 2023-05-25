@@ -29,7 +29,6 @@ public partial class DetallePedido
 
     public string MotivoDevolucion { get; set; } = null!;
 
-    public virtual ICollection<HisEstadoDetallePedido> HisEstadoDetallePedidos { get; set; } = new List<HisEstadoDetallePedido>();
 
     public virtual Empleado IdEmpleadoNavigation { get; set; } = null!;
 
