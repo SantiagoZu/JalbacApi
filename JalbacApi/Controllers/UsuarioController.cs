@@ -26,7 +26,6 @@ namespace JalbacApi.Controllers
             _response = new();
         }
 
-        [Authorize]
         [HttpGet]
         [ProducesResponseType(200)]
         public async Task<ActionResult<APIResponse>> GetUsuarios()
