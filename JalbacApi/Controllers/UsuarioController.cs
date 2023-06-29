@@ -94,7 +94,6 @@ namespace JalbacApi.Controllers
         }
 
         [HttpPost]
-        [Authorize]
         [ProducesResponseType(201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]

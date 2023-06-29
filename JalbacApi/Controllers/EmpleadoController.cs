@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
 using JalbacApi.Models;
 using JalbacApi.Models.Dto.EmpleadoDtos;
+using JalbacApi.Repositorio;
 using JalbacApi.Repositorio.IRepositorio;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Net;
 
 namespace JalbacApi.Controllers
@@ -12,11 +14,13 @@ namespace JalbacApi.Controllers
     public class EmpleadoController : ControllerBase
     {
         private readonly IEmpleadoRepositorio _empleadoRepositorio;
+        private readonly IUsuarioRepositorio _usuarioRepositorio;
         private readonly IMapper _mapper;
         protected APIResponse _response;
-        public EmpleadoController(IEmpleadoRepositorio empleadoRepositorio, IMapper mapper)
+        public EmpleadoController(IEmpleadoRepositorio empleadoRepositorio, IUsuarioRepositorio usuarioRepositorio, IMapper mapper)
         {
             _empleadoRepositorio = empleadoRepositorio;
+            _usuarioRepositorio = usuarioRepositorio;
             _mapper = mapper;
             _response = new();
         }
@@ -59,6 +63,7 @@ namespace JalbacApi.Controllers
                 {
                     _response.statusCode = HttpStatusCode.BadRequest;
                     _response.IsExistoso = false;
+                    _response.ErrorMessages.Add("No se ha proporcionado ningún Id");
                     return BadRequest(_response);
                 }
 
@@ -68,6 +73,7 @@ namespace JalbacApi.Controllers
                 {
                     _response.statusCode = HttpStatusCode.NotFound;
                     _response.IsExistoso = false;
+                    _response.ErrorMessages.Add("El empleado no existe");
                     return NotFound(_response);
                 }
 
@@ -95,6 +101,7 @@ namespace JalbacApi.Controllers
         {
             if (!ModelState.IsValid)
             {
+
                 return BadRequest(ModelState);
             }
 
@@ -123,11 +130,22 @@ namespace JalbacApi.Controllers
             {
                 _response.IsExistoso = false;
                 _response.statusCode = HttpStatusCode.BadRequest;
+                _response.ErrorMessages.Add("El empleado que se intenta editar no existe");
                 return BadRequest(_response);
             }
 
             Empleado empleado = _mapper.Map<Empleado>(model);
 
+            Usuario usuario = await _usuarioRepositorio.Obtener(u => u.IdUsuario == model.IdUsuario);
+
+            if (usuario != null)
+            {
+                // Actualizar el correo en el objeto de Usuario
+                usuario.Correo = model.Correo;
+
+                // Actualizar el objeto de Usuario en la base de datos
+                await _usuarioRepositorio.Editar(usuario);
+            }
             await _empleadoRepositorio.Editar(empleado);
 
             _response.IsExistoso = true;
@@ -147,24 +165,46 @@ namespace JalbacApi.Controllers
             {
                 _response.IsExistoso = false;
                 _response.statusCode = HttpStatusCode.BadRequest;
+                _response.ErrorMessages.Add("No se ha proporcionado ningún Id");
                 return BadRequest(_response);
             }
 
-            var pedido = await _empleadoRepositorio.Obtener(c => c.IdEmpleado == id);
+            var empleado = await _empleadoRepositorio.Obtener(c => c.IdEmpleado == id, incluirPropiedades: "DetallePedidos");
 
-            if (pedido == null)
+            if (empleado == null)
             {
                 _response.IsExistoso = false;
                 _response.statusCode = HttpStatusCode.NotFound;
+                _response.ErrorMessages.Add("El empleado que se intenta eliminar no existe");
                 return NotFound(_response);
             }
 
-            await _empleadoRepositorio.Remover(pedido);
+            try
+            {
+                if (empleado.DetallePedidos.Any())
+                {
+                    _response.IsExistoso = false;
+                    _response.statusCode = HttpStatusCode.BadRequest;
+                    _response.ErrorMessages.Add("El empleado tiene detalles de pedido y no se puede eliminar");
+                    return BadRequest(_response);
+                }
 
-            _response.IsExistoso = true;
-            _response.statusCode = HttpStatusCode.NoContent;
+                await _empleadoRepositorio.Remover(empleado);
 
-            return Ok(_response);
+                _response.IsExistoso = true;
+                _response.statusCode = HttpStatusCode.NoContent;
+
+                return Ok(_response);
+            }
+            catch (DbUpdateException)
+            {
+                // Manejar la excepción y devolver tu propia respuesta
+                _response.IsExistoso = false;
+                _response.statusCode = HttpStatusCode.BadRequest;
+                _response.ErrorMessages.Add("No se puede eliminar el empleado debido a un error interno.");
+                return BadRequest(_response);
+            }
+
         }
     }
 }
