@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -17,7 +18,6 @@ public partial class Pedido
     public DateTime FechaEntrega { get; set; }
 
     public virtual ICollection<DetallePedido> DetallePedidos { get; set; } = new List<DetallePedido>();
-
 
     public virtual Cliente IdClienteNavigation { get; set; } = null!;
 

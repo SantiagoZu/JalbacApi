@@ -30,6 +30,8 @@ namespace JalbacApi
             CreateMap<Pedido, PedidoDto>().ReverseMap();
             CreateMap<Pedido, PedidoCreateDto>().ReverseMap();
             CreateMap<Pedido, PedidoUpdateDto>().ReverseMap();
+            //CreateMap<Pedido, DetallePedido>().ReverseMap();
+            //CreateMap<DetallePedido, DetallePedidoDto>().ReverseMap();
             #endregion
 
             #region RolesDto

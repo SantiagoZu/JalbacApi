@@ -34,7 +34,7 @@ namespace JalbacApi.Controllers
         {
             try
             {
-                IEnumerable<DetallePedido> detallesList = await _detalleRepositorio.ObtenerTodos(incluirPropiedades: "IdEmpleadoNavigation,IdEstadoNavigation,IdPedidoNavigation");
+                IEnumerable<DetallePedido> detallesList = await _detalleRepositorio.ObtenerTodos(incluirPropiedades: /*"IdEmpleadoNavigation,IdEstadoNavigation,*/"IdPedidoNavigation");
 
 
                 _response.Resultado = _mapper.Map<IEnumerable<DetallePedidoDto>>(detallesList);
