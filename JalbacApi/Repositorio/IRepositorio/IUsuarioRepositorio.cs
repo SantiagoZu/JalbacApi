@@ -6,6 +6,6 @@ namespace JalbacApi.Repositorio.IRepositorio
     public interface IUsuarioRepositorio : IRepositorio<Usuario>
     {
         Task<Usuario> CrearUsuario(Usuario usuario);
-        Task<LoginResponseDto> Login(LoginRequestDto loginRequestDto);
+        Task<LoginResponseDto> Login(LoginRequestDto loginRequestDto, HttpContext httpContext);
     }
 }

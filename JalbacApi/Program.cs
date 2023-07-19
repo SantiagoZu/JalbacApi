@@ -36,6 +36,9 @@ builder.Services.AddScoped<IEmpleadoRepositorio, EmpleadoRepositorio>();
 builder.Services.AddScoped<IDetallePedidoRepositorio, DetallePedidoRepositorio>();
 builder.Services.AddScoped<IHisEstadoDetallePedidoRepositorio, HisEstadoDetallePedidoRepositorio>();
 builder.Services.AddScoped<IHisEstadoPedidoRepositorio, HisEstadoPedidoRepositorio>();
+builder.Services.AddScoped<IPermisoRepositorio, PermisoRepositorio>();
+builder.Services.AddScoped<IRolPermisoRepositorio, RolPermisoRepositorio>();
+builder.Services.AddHttpContextAccessor();
 
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

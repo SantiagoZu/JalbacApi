@@ -2,26 +2,24 @@
 using JalbacApi.Models;
 using JalbacApi.Models.Dto.RolDtos;
 using JalbacApi.Repositorio.IRepositorio;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Net;
 
 namespace JalbacApi.Controllers
 {
-    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class RolController : ControllerBase
     {
         private readonly IMapper _mapper;
         private readonly IRolRepositorio _rolRepositorio;
+        private readonly IRolPermisoRepositorio _rolPermisoRepositorio;
         protected APIResponse _response;
-        public RolController(IMapper mapper, IRolRepositorio rolRepositorio)
+        public RolController(IMapper mapper, IRolRepositorio rolRepositorio, IRolPermisoRepositorio rolPermisoRepositorio)
         {
             _mapper = mapper;
             _rolRepositorio = rolRepositorio;
+            _rolPermisoRepositorio = rolPermisoRepositorio;
             _response = new();
         }
 
@@ -95,7 +93,7 @@ namespace JalbacApi.Controllers
         [ProducesResponseType(201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<APIResponse>> CrearCliente([FromBody] RolCreateDto model)
+        public async Task<ActionResult<APIResponse>> CrearRol([FromBody] RolCreateDto model)
         {
             if (!ModelState.IsValid)
             {
@@ -107,14 +105,31 @@ namespace JalbacApi.Controllers
                 return BadRequest(model);
             }
 
-            Rol rol = _mapper.Map<Rol>(model);
+            Rol crearRol = new()
+            {
+                Nombre = model.Nombre,
+            };
 
-            await _rolRepositorio.Crear(rol);
+            await _rolRepositorio.Crear(crearRol);
+
+            foreach (var item in model.Permisos)
+            {
+                RolPermiso crearRolPermiso = new()
+                {
+                    IdRol = crearRol.IdRol,
+                    IdPermiso = item.IdPermiso,
+                };
+
+                await _rolPermisoRepositorio.Crear(crearRolPermiso);
+            }
+
+
+
             _response.IsExistoso = true;
-            _response.Resultado = rol;
+            _response.Resultado = crearRol;
             _response.statusCode = HttpStatusCode.Created;
 
-            return CreatedAtRoute("GetRol", new { id = rol.IdRol }, _response);
+            return CreatedAtRoute("GetRol", new { id = crearRol.IdRol }, _response);
 
         }
 
@@ -130,12 +145,29 @@ namespace JalbacApi.Controllers
                 return BadRequest(_response);
             }
 
-            Rol rol = _mapper.Map<Rol>(model);
+            Rol updateRol = new()
+            {
+                IdRol = id,
+                Nombre = model.Nombre,
+            };
 
-            await _rolRepositorio.Editar(rol);
+            await _rolRepositorio.Editar(updateRol);
+
+            var rolPermiso = _rolPermisoRepositorio.Consultar();
+
+            foreach (var item in model.Permisos)
+            {
+                RolPermiso updateRolPermiso = new()
+                {
+                    IdRol = id,
+                    IdPermiso = item.IdPermiso,
+                };
+
+                await _rolPermisoRepositorio.Editar(updateRolPermiso);
+            }
 
             _response.IsExistoso = true;
-            _response.Resultado = rol;
+            _response.Resultado = updateRol;
             _response.statusCode = HttpStatusCode.NoContent;
 
             return Ok(_response);

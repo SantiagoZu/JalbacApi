@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace JalbacApi.Models;
 
@@ -13,5 +14,6 @@ public partial class RolPermiso
 
     public virtual Permiso IdPermisoNavigation { get; set; } = null!;
 
+    [JsonIgnore]
     public virtual Rol IdRolNavigation { get; set; } = null!;
 }

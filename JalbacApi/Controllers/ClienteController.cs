@@ -3,13 +3,12 @@ using JalbacApi.Models;
 using JalbacApi.Models.Dto.ClienteDtos;
 using JalbacApi.Repositorio.IRepositorio;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Net;
 
 namespace JalbacApi.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class ClienteController : ControllerBase

@@ -3,10 +3,11 @@ using JalbacApi.Models;
 using JalbacApi.Models.Dto.UsuarioDtos;
 using JalbacApi.Repositorio.IRepositorio;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing.Constraints;
 
 namespace JalbacApi.Controllers
 {
@@ -26,7 +27,6 @@ namespace JalbacApi.Controllers
             _response = new();
         }
 
-        [Authorize]
         [HttpGet]
         [ProducesResponseType(200)]
         public async Task<ActionResult<APIResponse>> GetUsuarios()
@@ -187,11 +187,10 @@ namespace JalbacApi.Controllers
         }
 
         [HttpPost("login")]
-
-        public async Task<IActionResult> login([FromBody] LoginRequestDto modelo)
+        public async Task<IActionResult> Login([FromBody] LoginRequestDto modelo)
         {
-            var loginResponse = await _usuarioRepositorio.Login(modelo);
-            if (loginResponse.Usuario == null || loginResponse.Token == null)
+            var loginResponse = await _usuarioRepositorio.Login(modelo, HttpContext);
+            if (loginResponse.isExitoso == false || loginResponse.Token == "")
             {
                 _response.statusCode = HttpStatusCode.BadRequest;
                 _response.IsExistoso = false;
@@ -206,6 +205,7 @@ namespace JalbacApi.Controllers
 
             return Ok(_response);
         }
+
+        
     }
 }
-
