@@ -7,15 +7,18 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 
 namespace JalbacApi.Repositorio
 {
     public class UsuarioRepositorio : Repositorio<Usuario>, IUsuarioRepositorio
     {
+        private readonly HttpContext _htppContext;
         private readonly BdJalbacContext _db;
         private string secretKey;
-        public UsuarioRepositorio(BdJalbacContext db, IConfiguration configuration) : base(db)
+        public UsuarioRepositorio(IHttpContextAccessor httpContext, BdJalbacContext db, IConfiguration configuration) : base(db)
         {
+            _htppContext = httpContext.HttpContext;
             _db = db;
             secretKey = configuration.GetValue<string>("ApiSettings:Secret");
         }
@@ -28,13 +31,13 @@ namespace JalbacApi.Repositorio
 
             usuario.Contrasena = contrasenaEncriptada;
 
-            await _db.Usuarios.AddAsync(usuario);   
+            await _db.Usuarios.AddAsync(usuario);
             await _db.SaveChangesAsync();
 
             return usuario;
         }
 
-        public async Task<LoginResponseDto> Login(LoginRequestDto loginRequestDto)
+        public async Task<LoginResponseDto> Login(LoginRequestDto loginRequestDto, HttpContext httpContext)
         {
             var usuario = await _db.Usuarios.FirstOrDefaultAsync(u => u.Correo.ToLower() == loginRequestDto.Correo.ToLower());
 
@@ -43,14 +46,21 @@ namespace JalbacApi.Repositorio
             {
                 return new LoginResponseDto()
                 {
-                    Token = "",
-                    Usuario = null
+                    isExitoso = false
                 };
             }
 
             var passwordHasher = new PasswordHasher<Usuario>();
 
             var contrasenaCorrecta = passwordHasher.VerifyHashedPassword(null, usuario.Contrasena, loginRequestDto.Contrasena);
+
+            CookieOptions cookie = new CookieOptions
+            {
+                Expires = DateTime.Now.AddMonths(1), // Establece la fecha de expiración de la cookie
+                HttpOnly = true, // La cookie solo será accesible a través de HTTP (no JavaScript)
+                Secure = false, // La cookie solo será enviada a través de conexiones seguras (HTTPS)
+            };
+
             if (contrasenaCorrecta == PasswordVerificationResult.Success)
             {
                 var tokenHandler = new JwtSecurityTokenHandler();
@@ -68,20 +78,26 @@ namespace JalbacApi.Repositorio
                 };
 
                 var token = tokenHandler.CreateToken(tokenDescriptor);
+                var FinalToken = tokenHandler.WriteToken(token);
+
+                httpContext.Response.Cookies.Append("CookieJalbac", FinalToken);
+
                 return new LoginResponseDto()
                 {
-                    Token = tokenHandler.WriteToken(token),
-                    Usuario = usuario,
+                    isExitoso = true,
+                    Token = FinalToken
                 };
             }
             else
             {
                 return new LoginResponseDto()
                 {
-                    Token = "",
-                    Usuario = null
+                    isExitoso = false,
+                    Token = ""
                 };
             }
         }
+
+        
     }
 }

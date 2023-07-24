@@ -28,7 +28,7 @@ public partial class DetallePedido
     public string Detalle { get; set; } = null!;
 
     public string MotivoDevolucion { get; set; } = null!;
-
+    public int Cantidad { get; set; }
 
     public virtual Empleado IdEmpleadoNavigation { get; set; } = null!;
 

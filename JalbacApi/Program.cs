@@ -1,6 +1,5 @@
 using JalbacApi;
 using JalbacApi.Models;
-using JalbacApi.PoliticasSeguridad;
 using JalbacApi.Repositorio;
 using JalbacApi.Repositorio.IRepositorio;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -19,6 +18,14 @@ builder.Services.AddDbContext<BdJalbacContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("defaultConnection"));
 });
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("PoliticaCors", builder =>
+    {
+        builder.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin();
+    });
+});
 builder.Services.AddAutoMapper(typeof(MappingConfig));
 builder.Services.AddScoped<IClienteRepositorio, ClienteRepositorio>();
 builder.Services.AddScoped<IEstadoRepositorio, EstadoRepositorio>();
@@ -29,6 +36,9 @@ builder.Services.AddScoped<IEmpleadoRepositorio, EmpleadoRepositorio>();
 builder.Services.AddScoped<IDetallePedidoRepositorio, DetallePedidoRepositorio>();
 builder.Services.AddScoped<IHisEstadoDetallePedidoRepositorio, HisEstadoDetallePedidoRepositorio>();
 builder.Services.AddScoped<IHisEstadoPedidoRepositorio, HisEstadoPedidoRepositorio>();
+builder.Services.AddScoped<IPermisoRepositorio, PermisoRepositorio>();
+builder.Services.AddScoped<IRolPermisoRepositorio, RolPermisoRepositorio>();
+builder.Services.AddHttpContextAccessor();
 
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -107,6 +117,8 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 
 app.UseAuthorization();
+
+app.UseCors("PoliticaCors");
 
 app.MapControllers();
 

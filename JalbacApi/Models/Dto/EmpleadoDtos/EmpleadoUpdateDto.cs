@@ -13,6 +13,7 @@ namespace JalbacApi.Models.Dto.EmpleadoDtos
         public string Documento { get; set; } = null!;
 
         public string Nombre { get; set; } = null!;
+        public string Correo { get; set; }
 
         public string Apellido { get; set; } = null!;
 

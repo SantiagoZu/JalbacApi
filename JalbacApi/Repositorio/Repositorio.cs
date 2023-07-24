@@ -80,5 +80,19 @@ namespace JalbacApi.Repositorio
             dbSet.Remove(obj);
             await Grabar();
         }
+
+        public async Task<List<T>> Consultar(Expression<Func<T, bool>> filtro = null)
+        {
+            try
+            {
+                IQueryable<T> queryModelo = filtro == null ? _db.Set<T>() :
+                    _db.Set<T>().Where(filtro);
+                return await queryModelo.ToListAsync();
+            }
+            catch
+            {
+                throw;
+            }
+        }
     }
 }
