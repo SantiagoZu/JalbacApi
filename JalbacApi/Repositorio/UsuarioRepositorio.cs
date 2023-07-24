@@ -8,6 +8,10 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using MailKit.Security;
+using MailKit.Net.Smtp;
+using MimeKit;
+using MimeKit.Text;
 
 namespace JalbacApi.Repositorio
 {
@@ -16,11 +20,13 @@ namespace JalbacApi.Repositorio
         private readonly HttpContext _htppContext;
         private readonly BdJalbacContext _db;
         private string secretKey;
-        public UsuarioRepositorio(IHttpContextAccessor httpContext, BdJalbacContext db, IConfiguration configuration) : base(db)
+        private readonly IConfiguration _config;
+        public UsuarioRepositorio(IHttpContextAccessor httpContext, BdJalbacContext db, IConfiguration config) : base(db)
         {
             _htppContext = httpContext.HttpContext;
             _db = db;
-            secretKey = configuration.GetValue<string>("ApiSettings:Secret");
+            secretKey = config.GetValue<string>("ApiSettings:Secret");
+            _config = config;
         }
 
         public async Task<Usuario> CrearUsuario(Usuario usuario)
@@ -98,6 +104,30 @@ namespace JalbacApi.Repositorio
             }
         }
 
-        
+        public void EnviarCorreo(CorreoDto correoDto)
+        {
+            var email = new MimeMessage();
+
+            email.From.Add(MailboxAddress.Parse(_config.GetSection("Email:UserName").Value));
+            email.To.Add(MailboxAddress.Parse(correoDto.Para));
+            email.Subject = correoDto.Asunto;
+            email.Body = new TextPart(TextFormat.Html)
+            {
+                Text = correoDto.Contenido
+            };
+
+            using var smtp = new SmtpClient();
+
+            smtp.Connect(
+                _config.GetSection("Email:Host").Value,
+                Convert.ToInt32(_config.GetSection("Email:Puerto").Value),
+                SecureSocketOptions.StartTls
+            );
+            smtp.Authenticate(_config.GetSection("Email:UserName").Value, _config.GetSection("Email:Password").Value);
+            smtp.Send(email);
+            smtp.Disconnect(true);
+        }
+
+
     }
 }

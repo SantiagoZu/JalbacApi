@@ -206,6 +206,26 @@ namespace JalbacApi.Controllers
             return Ok(_response);
         }
 
-        
+        [HttpPost("EnviarCorreo")]
+        public async Task<IActionResult> EnviarCorreo(CorreoDto modelo)
+        {
+            var usuario = await _usuarioRepositorio.Obtener(u => u.Correo == modelo.Para);
+            if (usuario == null)
+            {
+                _response.IsExistoso = false;
+                _response.statusCode = HttpStatusCode.NotFound;
+                return NotFound(_response);
+            }
+
+            _usuarioRepositorio.EnviarCorreo(modelo);
+
+            _response.IsExistoso = true;
+            _response.statusCode = HttpStatusCode.OK;
+            _response.Resultado = modelo;
+
+            return Ok(_response);
+
+        }
+
     }
 }

@@ -153,17 +153,29 @@ namespace JalbacApi.Controllers
 
             await _rolRepositorio.Editar(updateRol);
 
-            var rolPermiso = _rolPermisoRepositorio.Consultar();
-
             foreach (var item in model.Permisos)
             {
-                RolPermiso updateRolPermiso = new()
-                {
-                    IdRol = id,
-                    IdPermiso = item.IdPermiso,
-                };
+                var rolPermiso = await _rolPermisoRepositorio.Consultar(rp => rp.IdRol == id);
 
-                await _rolPermisoRepositorio.Editar(updateRolPermiso);
+                foreach (var item2 in rolPermiso)
+                {
+                    if (item2.IdPermiso == item.IdPermiso)
+                    {
+                        await _rolPermisoRepositorio.Editar(item2);
+                        break;
+                    }
+                    else if (item2.IdPermiso != item.IdPermiso)
+                    {
+                        RolPermiso updateRolPermiso = new()
+                        {
+                            IdRol = id,
+                            IdPermiso = item.IdPermiso,
+                        };
+
+                        await _rolPermisoRepositorio.Crear(updateRolPermiso);
+                    }
+                }
+
             }
 
             _response.IsExistoso = true;
