@@ -161,7 +161,12 @@ namespace JalbacApi.Controllers
                 }
             foreach (var item2 in model.Permisos)
             {
-                await _rolPermisoRepositorio.Crear(item2);
+                RolPermiso crearRolPermiso = new()
+                {
+                    IdRol = id,
+                    IdPermiso = item2.IdPermiso
+                }
+                await _rolPermisoRepositorio.Crear(crearRolPermiso);
             }
 
 
