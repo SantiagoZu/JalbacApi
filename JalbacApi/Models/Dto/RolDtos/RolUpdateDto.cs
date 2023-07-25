@@ -6,6 +6,8 @@ namespace JalbacApi.Models.Dto.RolDtos
     {
         public int IdRol { get; set; }
         public string Nombre { get; set; }
+
+        public bool Estado { get; set; }
         public List<PermisoDto> Permisos { get; set; }
 
     }

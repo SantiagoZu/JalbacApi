@@ -132,7 +132,6 @@ namespace JalbacApi.Controllers
         }
 
         [HttpPut("{id:int}")]
-        [Authorize]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         public async Task<ActionResult<APIResponse>> EditarUsuario(int id, [FromBody] UsuarioUpdateDto model)
