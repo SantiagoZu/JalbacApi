@@ -93,10 +93,6 @@ public partial class BdJalbacContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false)
                 .HasColumnName("material");
-            entity.Property(e => e.MotivoDevolucion)
-                .HasMaxLength(50)
-                .IsUnicode(false)
-                .HasColumnName("motivoDevolucion");
             entity.Property(e => e.NombreAnillido)
                 .HasMaxLength(50)
                 .IsUnicode(false)

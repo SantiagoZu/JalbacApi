@@ -30,7 +30,6 @@ namespace JalbacApi.Models.Dto.DetallePedidoDtos
 
         public int Cantidad { get; set; }
 
-
         public string MotivoDevolucion { get; set; } = null!;
     }
 }

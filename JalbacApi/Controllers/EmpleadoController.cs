@@ -9,7 +9,7 @@ using System.Net;
 
 namespace JalbacApi.Controllers
 {
-    [Authorize]
+    
     [Route("api/[controller]")]
     [ApiController]
     public class EmpleadoController : ControllerBase
@@ -111,7 +111,25 @@ namespace JalbacApi.Controllers
                 return BadRequest(model);
             }
 
-            Empleado empleado = _mapper.Map<Empleado>(model);
+            Usuario usuario = new()
+            {
+                Correo = model.Correo,
+                Contrasena = model.Contrasena,
+                IdRol = model.IdRol,
+                Estado = model.Estado,
+            };
+
+            await _usuarioRepositorio.CrearUsuario(usuario);
+
+            Empleado empleado = new()
+            {
+                Nombre = model.Nombre,
+                Apellido = model.Apellido,
+                Cargo = model.Cargo,
+                Documento = model.Documento,
+                Estado = model.Estado,
+                IdUsuario = usuario.IdUsuario,
+            };
 
             await _empleadoRepositorio.Crear(empleado);
             _response.IsExistoso = true;
@@ -143,6 +161,8 @@ namespace JalbacApi.Controllers
             {
                 // Actualizar el correo en el objeto de Usuario
                 usuario.Correo = model.Correo;
+                usuario.Estado = model.Estado;
+                usuario.IdRol = model.IdRol;
 
                 // Actualizar el objeto de Usuario en la base de datos
                 await _usuarioRepositorio.Editar(usuario);

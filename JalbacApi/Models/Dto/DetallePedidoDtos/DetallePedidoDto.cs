@@ -1,5 +1,6 @@
 ﻿using JalbacApi.Models.Dto.EmpleadoDtos;
 using JalbacApi.Models.Dto.EstadoDtos;
+using JalbacApi.Models.Dto.HisEstadoDetallePedidoDtos;
 using JalbacApi.Models.Dto.PedidoDtos;
 
 namespace JalbacApi.Models.Dto.DetallePedidoDtos
@@ -29,12 +30,11 @@ namespace JalbacApi.Models.Dto.DetallePedidoDtos
 
         public string Material { get; set; } = null!;
 
-        public string Detalle { get; set; } = null!;
+        public string Detalle { get; set; } = null!;    
+
         public int Cantidad { get; set; }
 
-
-        public string MotivoDevolucion { get; set; } = null!;
-
+        public List<string> MotivoDevolucion { get; set; } = null!;
 
     }
 }

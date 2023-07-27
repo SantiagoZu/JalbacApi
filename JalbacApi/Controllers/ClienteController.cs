@@ -8,7 +8,6 @@ using System.Net;
 
 namespace JalbacApi.Controllers
 {
-    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class ClienteController : ControllerBase

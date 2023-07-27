@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Net;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing.Constraints;
+using Microsoft.AspNetCore.Identity;
 
 namespace JalbacApi.Controllers
 {
@@ -53,7 +54,6 @@ namespace JalbacApi.Controllers
         }
 
         [HttpGet("{id:int}", Name = "GetUsuario")]
-        [Authorize]
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
@@ -206,6 +206,56 @@ namespace JalbacApi.Controllers
             return Ok(_response);
         }
 
-        
+        [HttpPost("EnviarCorreo")]
+        public async Task<IActionResult> EnviarCorreo(CorreoDto modelo)
+        {
+            var usuario = await _usuarioRepositorio.Obtener(u => u.Correo == modelo.Para);
+            if (usuario == null)
+            {
+                _response.IsExistoso = false;
+                _response.statusCode = HttpStatusCode.NotFound;
+                _response.ErrorMessages.Add("No se encontró un usuario con el correo electrónico proporcionado");
+                return NotFound(_response);
+            }
+
+            _usuarioRepositorio.EnviarCorreo(modelo);
+
+            _response.IsExistoso = true;
+            _response.statusCode = HttpStatusCode.OK;
+            _response.Resultado = modelo;
+
+            return Ok(_response);
+
+        }
+
+        [HttpPost("ResetContraseña")]
+        public async Task<IActionResult> ResetContraseña(ResetPasswordDto modelo)
+        {
+            var usuario = await _usuarioRepositorio.Obtener(u => u.Correo == modelo.Correo);
+
+            if (usuario == null)
+            {
+                _response.IsExistoso = false;
+                _response.statusCode = HttpStatusCode.NotFound;
+                _response.ErrorMessages.Add("No se encontr un usuario con el correo electrónico proporcionado");
+                return NotFound(_response);
+            }
+
+            var passwordHasher = new PasswordHasher<Usuario>();
+            var contrasenaEncriptada = passwordHasher.HashPassword(null, modelo.Contrasena);
+
+            usuario.Contrasena = contrasenaEncriptada;
+
+            await _usuarioRepositorio.Editar(usuario);
+
+            _response.IsExistoso = true;
+            _response.statusCode = HttpStatusCode.OK;
+            _response.Resultado = usuario;
+
+
+            return Ok(_response);
+
+        }
+
     }
 }

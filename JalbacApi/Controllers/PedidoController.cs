@@ -16,13 +16,15 @@ namespace JalbacApi.Controllers
     public class PedidoController : ControllerBase
     {
         private readonly IPedidoRepositorio _pedidoRepositorio;
-        private readonly IHisEstadoPedidoRepositorio _hisEstadoPedido;
+        private readonly IDetallePedidoRepositorio _detallePedidoRepositorio;
+        private readonly IHisEstadoPedidoRepositorio _hisEstadoPedidoRepositorio;
         private readonly IMapper _mapper;
         protected APIResponse _response;
-        public PedidoController(IPedidoRepositorio pedidoRepositorio, IHisEstadoPedidoRepositorio hisEstadoPedido,IMapper mapper)
+        public PedidoController(IPedidoRepositorio pedidoRepositorio, IDetallePedidoRepositorio detallePedidoRepositorio, IHisEstadoPedidoRepositorio hisEstadoPedido, IMapper mapper)
         {
             _pedidoRepositorio = pedidoRepositorio;
-            _hisEstadoPedido = hisEstadoPedido;
+            _detallePedidoRepositorio = detallePedidoRepositorio;
+            _hisEstadoPedidoRepositorio = hisEstadoPedido;
             _mapper = mapper;
             _response = new();
         }
@@ -109,8 +111,34 @@ namespace JalbacApi.Controllers
                 return BadRequest(model);
             }
 
-            Pedido pedido = _mapper.Map<Pedido>(model);
+            Pedido pedido = new()
+            {
+                IdCliente = model.IdCliente,
+                IdEstado = model.IdEstado,
+                FechaEntrega = DateTime.Parse(model.FechaEntrega),
+            };
+
             await _pedidoRepositorio.CrearPedido(pedido);
+
+            foreach (var item in model.DetallesPedido)
+            {
+                DetallePedido detallePedido = new()
+                {
+                    IdPedido = pedido.IdPedido,
+                    IdEmpleado = item.IdEmpleado,
+                    IdEstado = item.IdEstado,
+                    NombreAnillido = item.NombreAnillido,
+                    Tipo = item.Tipo,
+                    Peso = item.Peso,
+                    TamanoAnillo = item.TamanoAnillo,
+                    TamanoPiedra = item.TamanoPiedra,
+                    Material = item.Material,
+                    Detalle = item.Detalle,
+                    Cantidad = item.Cantidad,
+                };
+
+                await _detallePedidoRepositorio.Crear(detallePedido);
+            }
             HisEstadoPedido hisEstadoPedido = new()
             {
                 IdEstado = pedido.IdEstado,
@@ -118,7 +146,8 @@ namespace JalbacApi.Controllers
 
             };
 
-            await _hisEstadoPedido.CrearHisPedido(hisEstadoPedido);
+            await _hisEstadoPedidoRepositorio.CrearHisPedido(hisEstadoPedido);
+
 
             _response.IsExistoso = true;
             _response.Resultado = pedido;
@@ -139,12 +168,29 @@ namespace JalbacApi.Controllers
                 return BadRequest(_response);
             }
 
-            Pedido pedido = _mapper.Map<Pedido>(model);
+            // Paso 1: Obtener el pedido original de la base de datos
+            var pedidoOriginal = await _pedidoRepositorio.Obtener(p => p.IdPedido == id);
 
-            await _pedidoRepositorio.Editar(pedido);
+            // Paso 2: Comparar el estado original con el nuevo estado
+            if (pedidoOriginal.IdEstado != model.IdEstado)
+            {
+                // Paso 3: Crear un nuevo registro en el historial de estados
+                HisEstadoPedido hisEstadoPedido = new()
+                {
+                    IdPedido = pedidoOriginal.IdPedido,
+                    IdEstado = model.IdEstado,
+                    Fecha = DateTime.Now // Puedes ajustar la fecha según tu necesidad
+                };
+
+                await _hisEstadoPedidoRepositorio.CrearHisPedido(hisEstadoPedido);
+            }
+
+            // Paso 4: Actualizar el pedido con el nuevo estado y otros datos
+            _mapper.Map(model, pedidoOriginal);
+            await _pedidoRepositorio.Editar(pedidoOriginal);
 
             _response.IsExistoso = true;
-            _response.Resultado = pedido;
+            _response.Resultado = pedidoOriginal;
             _response.statusCode = HttpStatusCode.NoContent;
 
             return Ok(_response);

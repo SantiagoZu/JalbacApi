@@ -4,7 +4,6 @@ namespace JalbacApi.Models.Dto.EmpleadoDtos
 {
     public class EmpleadoCreateDto
     {
-        public int IdUsuario { get; set; }
 
         public bool Estado { get; set; }
 
@@ -15,5 +14,11 @@ namespace JalbacApi.Models.Dto.EmpleadoDtos
         public string Apellido { get; set; } = null!;
 
         public string Cargo { get; set; } = null!;
+
+        public int IdRol { get; set; }
+
+        public string Correo  { get; set; }
+
+        public string Contrasena { get; set; } = null!;
     }
 }

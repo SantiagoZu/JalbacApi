@@ -149,22 +149,29 @@ namespace JalbacApi.Controllers
             {
                 IdRol = id,
                 Nombre = model.Nombre,
+                Estado = model.Estado
             };
 
             await _rolRepositorio.Editar(updateRol);
 
-            var rolPermiso = _rolPermisoRepositorio.Consultar();
+            var rolPermiso = await _rolPermisoRepositorio.Consultar(rp => rp.IdRol == id);
 
-            foreach (var item in model.Permisos)
+            foreach (var item in rolPermiso)
             {
-                RolPermiso updateRolPermiso = new()
+                await _rolPermisoRepositorio.Remover(item);
+            }
+
+            foreach (var item2 in model.Permisos)
+            {
+                RolPermiso crearRolPermiso = new()
                 {
                     IdRol = id,
-                    IdPermiso = item.IdPermiso,
+                    IdPermiso = item2.IdPermiso
                 };
 
-                await _rolPermisoRepositorio.Editar(updateRolPermiso);
+                await _rolPermisoRepositorio.Crear(crearRolPermiso);
             }
+
 
             _response.IsExistoso = true;
             _response.Resultado = updateRol;
@@ -184,6 +191,12 @@ namespace JalbacApi.Controllers
                 _response.IsExistoso = false;
                 _response.statusCode = HttpStatusCode.BadRequest;
                 return BadRequest(_response);
+            }
+
+            var rolPermiso = await _rolPermisoRepositorio.Consultar(rp => rp.IdRol == id);
+            foreach (var item in rolPermiso)
+            {
+                await _rolPermisoRepositorio.Remover(item);
             }
 
             var rol = await _rolRepositorio.Obtener(c => c.IdRol == id);

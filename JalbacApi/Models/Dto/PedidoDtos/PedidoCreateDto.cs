@@ -1,4 +1,6 @@
-﻿namespace JalbacApi.Models.Dto.PedidoDtos
+﻿using JalbacApi.Models.Dto.DetallePedidoDtos;
+
+namespace JalbacApi.Models.Dto.PedidoDtos
 {
     public class PedidoCreateDto
     {
@@ -7,6 +9,7 @@
         public int IdEstado { get; set; }
 
         public string FechaEntrega { get; set; }
+        public List<DetalleCreateDto> DetallesPedido { get; set; }
 
     }
 }

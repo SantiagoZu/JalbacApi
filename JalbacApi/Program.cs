@@ -53,7 +53,10 @@ builder.Services.AddHttpContextAccessor();
 //});
 //builder.Services.AddSingleton<IAuthorizationHandler, PermisosRolePolicy>();
 
-
+builder.Services.AddControllersWithViews()
+    .AddNewtonsoftJson(options =>
+    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+);
 
 var key = builder.Configuration.GetValue<string>("ApiSettings:Secret");
 builder.Services.AddAuthentication(x =>

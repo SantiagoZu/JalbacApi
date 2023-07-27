@@ -1,6 +1,7 @@
 ﻿using JalbacApi.Models;
 using JalbacApi.Repositorio.IRepositorio;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 using System.Linq.Expressions;
 
 namespace JalbacApi.Repositorio
@@ -55,10 +56,13 @@ namespace JalbacApi.Repositorio
             return await query.FirstOrDefaultAsync();
         }
 
-        public async Task<List<T>> ObtenerTodos(Expression<Func<T, bool>> filtro = null, string incluirPropiedades = null)
+        public async Task<List<T>> ObtenerTodos(Expression<Func<T, bool>> filtro = null, bool tracked = true, string incluirPropiedades = null)
         {
             IQueryable<T> query = dbSet;
-
+            if (!tracked)
+            {
+                query = query.AsNoTracking();
+            }
             if (filtro != null)
             {
                 query = query.Where(filtro);
@@ -69,6 +73,14 @@ namespace JalbacApi.Repositorio
                 foreach (var incluirProp in incluirPropiedades.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
                 {
                     query = query.Include(incluirProp);
+                    if (incluirProp == "IdUsuarioNavigation")
+                    {
+                        query = query.Include("IdUsuarioNavigation.IdRolNavigation");
+                    }
+                    if (incluirProp == "IdPedidoNavigation")
+                    {
+                        query = query.Include("IdPedidoNavigation.IdClienteNavigation");
+                    }
                 }
             }
 

@@ -15,5 +15,5 @@ public partial class HisEstadoDetallePedido
 
     public DateTime Fecha { get; set; }
 
-
+    public string MotivoDevolucion { get; set; }
 }

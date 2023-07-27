@@ -9,7 +9,7 @@ public partial class Empleado
 
     public int IdUsuario { get; set; }
     public virtual Usuario IdUsuarioNavigation { get; set; } = null!;
-
+    
     public bool Estado { get; set; }
 
     public string Documento { get; set; } = null!;
