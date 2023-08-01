@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using JalbacApi.Models;
 using JalbacApi.Models.Dto.EmpleadoDtos;
+using JalbacApi.Repositorio;
 using JalbacApi.Repositorio.IRepositorio;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,12 +18,14 @@ namespace JalbacApi.Controllers
         private readonly IEmpleadoRepositorio _empleadoRepositorio;
         private readonly IUsuarioRepositorio _usuarioRepositorio;
         private readonly IMapper _mapper;
+        private readonly IRolRepositorio _rolRepositorio;
         protected APIResponse _response;
-        public EmpleadoController(IEmpleadoRepositorio empleadoRepositorio, IUsuarioRepositorio usuarioRepositorio, IMapper mapper)
+        public EmpleadoController(IEmpleadoRepositorio empleadoRepositorio, IUsuarioRepositorio usuarioRepositorio, IMapper mapper, IRolRepositorio rolRepositorio)
         {
             _empleadoRepositorio = empleadoRepositorio;
             _usuarioRepositorio = usuarioRepositorio;
             _mapper = mapper;
+            _rolRepositorio = rolRepositorio;
             _response = new();
         }
 
@@ -168,6 +171,13 @@ namespace JalbacApi.Controllers
                 await _usuarioRepositorio.Editar(usuario);
             }
             await _empleadoRepositorio.Editar(empleado);
+            if (model.Estado == true)
+            {
+                var rol = await _rolRepositorio.Obtener(r => r.IdRol == usuario.IdRol);
+
+                rol.Estado = model.Estado;
+                await _rolRepositorio.Editar(rol);
+            }
 
             _response.IsExistoso = true;
             _response.Resultado = empleado;
@@ -227,5 +237,36 @@ namespace JalbacApi.Controllers
             }
 
         }
+
+        [HttpPost("{documento}")]
+        [ProducesResponseType(202)]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        public async Task<ActionResult<APIResponse>> ValidarDocumento(string documento)
+        {
+            if (documento == null)
+            {
+                _response.IsExistoso = false;
+                _response.statusCode = HttpStatusCode.BadRequest;
+                return BadRequest(_response);
+            }
+
+            var empleado = await _empleadoRepositorio.Obtener(e => e.Documento == documento);
+
+            if (empleado != null)
+            {
+                _response.IsExistoso = true;
+                _response.statusCode = HttpStatusCode.Accepted;
+                _response.ErrorMessages.Add("Ya existe un empleado con el mismo documento");
+                return Ok(_response);
+            }
+
+            _response.IsExistoso = false;
+            _response.statusCode = HttpStatusCode.NoContent;
+            return Ok(_response);
+
+        }
+
+        
     }
 }

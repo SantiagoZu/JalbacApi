@@ -34,13 +34,13 @@ namespace JalbacApi.Controllers
         {
             try
             {
-                IEnumerable<DetallePedido> detallesList = await _detalleRepositorio.ObtenerTodos(incluirPropiedades: "IdEmpleadoNavigation,IdEstadoNavigation,IdPedidoNavigation");
+                IEnumerable<DetallePedido> detallesList = await _detalleRepositorio.ObtenerTodos(tracked: false,incluirPropiedades: "IdEmpleadoNavigation,IdEstadoNavigation,IdPedidoNavigation");
 
                 foreach (var detalle in detallesList)
                 {
                     var motivosDevolucion = await _hisEstadoDetallePedidoRepositorio.ObtenerTodos(dm => dm.IdDetallePedido == detalle.IdDetallePedido);
 
-                    List<string> motivos = new List<string>(); ;
+                    List<string> motivos = new List<string>();
 
                     foreach (var motivo in motivosDevolucion)
                     {
@@ -213,6 +213,7 @@ namespace JalbacApi.Controllers
             }
 
             var detalle = await _detalleRepositorio.Obtener(c => c.IdDetallePedido == id);
+            var histDetalle = await _hisEstadoDetallePedidoRepositorio.Obtener(hist => hist.IdDetallePedido == detalle.IdDetallePedido);
 
             if (detalle == null)
             {
@@ -220,6 +221,8 @@ namespace JalbacApi.Controllers
                 _response.statusCode = HttpStatusCode.NotFound;
                 return NotFound(_response);
             }
+
+            await _hisEstadoDetallePedidoRepositorio.Remover(histDetalle);
 
             await _detalleRepositorio.Remover(detalle);
 

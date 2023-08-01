@@ -7,11 +7,9 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Http;
-using MailKit.Security;
-using MailKit.Net.Smtp;
-using MimeKit;
-using MimeKit.Text;
+using SendGrid;
+using SendGrid.Helpers.Mail;
+
 namespace JalbacApi.Repositorio
 {
     public class UsuarioRepositorio : Repositorio<Usuario>, IUsuarioRepositorio
@@ -103,28 +101,17 @@ namespace JalbacApi.Repositorio
             }
         }
 
-        public void EnviarCorreo(CorreoDto correoDto)
+        public async Task EnviarCorreo(CorreoDto correoDto)
         {
-            var email = new MimeMessage();
-
-            email.From.Add(MailboxAddress.Parse(_config.GetSection("Email:UserName").Value));
-            email.To.Add(MailboxAddress.Parse(correoDto.Para));
-            email.Subject = correoDto.Asunto;
-            email.Body = new TextPart(TextFormat.Html)
-            {
-                Text = correoDto.Contenido
-            };
-
-            using var smtp = new SmtpClient();
-
-            smtp.Connect(
-                _config.GetSection("Email:Host").Value,
-                Convert.ToInt32(_config.GetSection("Email:Puerto").Value),
-                SecureSocketOptions.StartTls
-            );
-            smtp.Authenticate(_config.GetSection("Email:UserName").Value, _config.GetSection("Email:Password").Value);
-            smtp.Send(email);
-            smtp.Disconnect(true);
+            var apiKey = "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";
+            var client = new SendGridClient(apiKey);
+            var from = new EmailAddress("jalbacprueba@gmail.com", "JalbacSoft");
+            var to = new EmailAddress(correoDto.Para);
+            var subject = correoDto.Asunto;
+            var plainTextContent = "";
+            var htmlContent = correoDto.Contenido;
+            var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
+            var response = await client.SendEmailAsync(msg);
         }
     }
 }

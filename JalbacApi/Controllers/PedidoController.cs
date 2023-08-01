@@ -18,13 +18,15 @@ namespace JalbacApi.Controllers
         private readonly IPedidoRepositorio _pedidoRepositorio;
         private readonly IDetallePedidoRepositorio _detallePedidoRepositorio;
         private readonly IHisEstadoPedidoRepositorio _hisEstadoPedidoRepositorio;
+        private readonly IHisEstadoDetallePedidoRepositorio _hisEstadoDetallePedidoRepositorio;
         private readonly IMapper _mapper;
         protected APIResponse _response;
-        public PedidoController(IPedidoRepositorio pedidoRepositorio, IDetallePedidoRepositorio detallePedidoRepositorio, IHisEstadoPedidoRepositorio hisEstadoPedido, IMapper mapper)
+        public PedidoController(IPedidoRepositorio pedidoRepositorio, IDetallePedidoRepositorio detallePedidoRepositorio, IHisEstadoPedidoRepositorio hisEstadoPedido, IHisEstadoDetallePedidoRepositorio hisEstadoDetallePedidoRepositorio,IMapper mapper)
         {
             _pedidoRepositorio = pedidoRepositorio;
             _detallePedidoRepositorio = detallePedidoRepositorio;
             _hisEstadoPedidoRepositorio = hisEstadoPedido;
+            _hisEstadoDetallePedidoRepositorio = hisEstadoDetallePedidoRepositorio;
             _mapper = mapper;
             _response = new();
         }
@@ -137,7 +139,16 @@ namespace JalbacApi.Controllers
                     Cantidad = item.Cantidad,
                 };
 
+
                 await _detallePedidoRepositorio.Crear(detallePedido);
+                HisEstadoDetallePedido hisEstadoDetallePedido = new()
+                {
+                    IdEstado = detallePedido.IdEstado,
+                    IdDetallePedido = detallePedido.IdDetallePedido,
+
+                };
+
+                await _hisEstadoDetallePedidoRepositorio.CrearHisDetallePedido(hisEstadoDetallePedido);
             }
             HisEstadoPedido hisEstadoPedido = new()
             {

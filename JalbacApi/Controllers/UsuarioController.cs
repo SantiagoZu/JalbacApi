@@ -156,7 +156,6 @@ namespace JalbacApi.Controllers
         }
 
         [HttpDelete("{id:int}")]
-        [Authorize]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
@@ -218,7 +217,7 @@ namespace JalbacApi.Controllers
                 return NotFound(_response);
             }
 
-            _usuarioRepositorio.EnviarCorreo(modelo);
+            await _usuarioRepositorio.EnviarCorreo(modelo);
 
             _response.IsExistoso = true;
             _response.statusCode = HttpStatusCode.OK;
@@ -237,7 +236,7 @@ namespace JalbacApi.Controllers
             {
                 _response.IsExistoso = false;
                 _response.statusCode = HttpStatusCode.NotFound;
-                _response.ErrorMessages.Add("No se encontr un usuario con el correo electrónico proporcionado");
+                _response.ErrorMessages.Add("No se encontró un usuario con el correo electrónico proporcionado");
                 return NotFound(_response);
             }
 
@@ -253,6 +252,35 @@ namespace JalbacApi.Controllers
             _response.Resultado = usuario;
 
 
+            return Ok(_response);
+
+        }
+
+        [HttpPost("{correo}")]
+        [ProducesResponseType(202)]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        public async Task<ActionResult<APIResponse>> ValidarCorreo(string correo)
+        {
+            if (correo == null)
+            {
+                _response.IsExistoso = false;
+                _response.statusCode = HttpStatusCode.BadRequest;
+                return BadRequest(_response);
+            }
+
+            var usuario = await _usuarioRepositorio.Obtener(u => u.Correo == correo);
+
+            if (usuario != null)
+            {
+                _response.IsExistoso = true;
+                _response.statusCode = HttpStatusCode.Accepted;
+                _response.ErrorMessages.Add("Ya existe un empleado con el mismo correo");
+                return Ok(_response);
+            }
+
+            _response.IsExistoso = false;
+            _response.statusCode = HttpStatusCode.NoContent;
             return Ok(_response);
 
         }
