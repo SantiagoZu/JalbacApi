@@ -32,7 +32,7 @@ namespace JalbacApi.Controllers
         {
             try
             {
-                IEnumerable<HisEstadoPedido> pedidosList = await _hisPedidoRepositorio.ObtenerTodos(incluirPropiedades: "IdEstadoNavigation,IdPedidoNavigation");
+                IEnumerable<HisEstadoPedido> pedidosList = await _hisPedidoRepositorio.ObtenerTodos(tracked: false, incluirPropiedades: "IdEstadoNavigation,IdPedidoNavigation");
 
 
                 _response.Resultado = _mapper.Map<IEnumerable<HisEstadoPedidoDto>>(pedidosList);

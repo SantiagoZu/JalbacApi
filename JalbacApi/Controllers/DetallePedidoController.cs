@@ -34,8 +34,37 @@ namespace JalbacApi.Controllers
         {
             try
             {
-                IEnumerable<DetallePedido> detallesList = await _detalleRepositorio.ObtenerTodos(incluirPropiedades: "IdEmpleadoNavigation,IdEstadoNavigation,IdPedidoNavigation");
+                IEnumerable<DetallePedido> detallesList = await _detalleRepositorio.ObtenerTodos(tracked: false,incluirPropiedades: "IdEmpleadoNavigation,IdEstadoNavigation,IdPedidoNavigation");
 
+                foreach (var detalle in detallesList)
+                {
+                    var motivosDevolucion = await _hisEstadoDetallePedidoRepositorio.ObtenerTodos(dm => dm.IdDetallePedido == detalle.IdDetallePedido);
+
+                    List<string> motivos = new List<string>();
+
+                    foreach (var motivo in motivosDevolucion)
+                    {
+                        motivos.Add(motivo.MotivoDevolucion);
+                        
+                    }
+
+                    DetallePedidoDto detallePedidoDto = new()
+                    {
+                        IdDetallePedido = detalle.IdDetallePedido,
+                        IdPedido = detalle.IdPedido,
+                        IdEmpleado = detalle.IdEmpleado,
+                        IdEstado = detalle.IdEstado,
+                        NombreAnillido = detalle.NombreAnillido,
+                        Tipo = detalle.Tipo,
+                        Peso = detalle.Peso,
+                        TamanoAnillo = detalle.TamanoAnillo,
+                        TamanoPiedra = detalle.TamanoPiedra,
+                        Material = detalle.Material,
+                        Detalle = detalle.Detalle,
+                        Cantidad = detalle.Cantidad,
+                        MotivoDevolucion = motivos
+                    };
+                }
 
                 _response.Resultado = _mapper.Map<IEnumerable<DetallePedidoDto>>(detallesList);
                 _response.statusCode = HttpStatusCode.OK;
@@ -145,12 +174,26 @@ namespace JalbacApi.Controllers
                 return BadRequest(_response);
             }
 
-            DetallePedido detalle = _mapper.Map<DetallePedido>(model);
+            var detalleOriginal = await _detalleRepositorio.Obtener(d => d.IdDetallePedido == id);
 
-            await _detalleRepositorio.Editar(detalle);
+            if (detalleOriginal.IdEstado != model.IdEstado)
+            {
+                HisEstadoDetallePedido hisEstadoDetallePedido = new()
+                {
+                    IdEstado = model.IdEstado,
+                    IdDetallePedido = model.IdDetallePedido,
+                    Fecha = DateTime.Now,
+                    MotivoDevolucion = model.MotivoDevolucion,
+                };
+                await _hisEstadoDetallePedidoRepositorio.CrearHisDetallePedido(hisEstadoDetallePedido);
+            };
+
+            _mapper.Map(model, detalleOriginal);
+
+            await _detalleRepositorio.Editar(detalleOriginal);
 
             _response.IsExistoso = true;
-            _response.Resultado = detalle;
+            _response.Resultado = detalleOriginal;
             _response.statusCode = HttpStatusCode.NoContent;
 
             return Ok(_response);
@@ -170,6 +213,7 @@ namespace JalbacApi.Controllers
             }
 
             var detalle = await _detalleRepositorio.Obtener(c => c.IdDetallePedido == id);
+            var histDetalle = await _hisEstadoDetallePedidoRepositorio.Obtener(hist => hist.IdDetallePedido == detalle.IdDetallePedido);
 
             if (detalle == null)
             {
@@ -177,6 +221,8 @@ namespace JalbacApi.Controllers
                 _response.statusCode = HttpStatusCode.NotFound;
                 return NotFound(_response);
             }
+
+            await _hisEstadoDetallePedidoRepositorio.Remover(histDetalle);
 
             await _detalleRepositorio.Remover(detalle);
 

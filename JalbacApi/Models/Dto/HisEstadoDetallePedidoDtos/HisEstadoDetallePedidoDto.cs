@@ -14,5 +14,7 @@ namespace JalbacApi.Models.Dto.HisEstadoDetallePedidoDtos
         public virtual DetallePedidoDto IdDetallePedidoNavigation { get; set; } = null!;
 
         public DateTime Fecha { get; set; }
+
+        public string MotivoDevolucion { get; set; }
     }
 }

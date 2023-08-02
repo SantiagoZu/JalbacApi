@@ -87,7 +87,7 @@ namespace JalbacApi.Controllers
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        
+
         public async Task<ActionResult<APIResponse>> PermisosPorRol(int idRol)
         {
             try
@@ -104,6 +104,8 @@ namespace JalbacApi.Controllers
 
                 IQueryable<Permiso> permisos = (from rp in rolPermiso
                                                 join p in permiso on rp.IdPermiso equals p.IdPermiso
+                                                where rp.IdRol == idRol
+                                                select p).AsQueryable();
                                                 where rp.IdRol == idRol select p).AsQueryable();
 
                 var listaPermisos = permisos.ToList();

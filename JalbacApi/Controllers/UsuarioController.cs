@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Net;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing.Constraints;
+using Microsoft.AspNetCore.Identity;
 
 namespace JalbacApi.Controllers
 {
@@ -18,12 +19,14 @@ namespace JalbacApi.Controllers
         private readonly IMapper _mapper;
         private readonly IUsuarioRepositorio _usuarioRepositorio;
         private readonly IEmpleadoRepositorio _empleadoRepositorio;
+        private readonly IRolRepositorio _rolRepositorio;
         protected APIResponse _response;
-        public UsuarioController(IMapper mapper, IUsuarioRepositorio usuarioRepositorio, IEmpleadoRepositorio empleadoRepositorio)
+        public UsuarioController(IMapper mapper, IUsuarioRepositorio usuarioRepositorio, IEmpleadoRepositorio empleadoRepositorio, IRolRepositorio rolRepositorio)
         {
             _mapper = mapper;
             _usuarioRepositorio = usuarioRepositorio;
             _empleadoRepositorio = empleadoRepositorio;
+            _rolRepositorio = rolRepositorio;
             _response = new();
         }
 
@@ -53,7 +56,6 @@ namespace JalbacApi.Controllers
         }
 
         [HttpGet("{id:int}", Name = "GetUsuario")]
-        [Authorize]
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
@@ -155,7 +157,6 @@ namespace JalbacApi.Controllers
         }
 
         [HttpDelete("{id:int}")]
-        [Authorize]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
@@ -198,11 +199,101 @@ namespace JalbacApi.Controllers
                 return BadRequest(_response);
             }
 
+            var usuario = await _usuarioRepositorio.Obtener(u => u.Correo == modelo.Correo);
+            var rol = await _rolRepositorio.Obtener(r => r.IdRol == usuario.IdRol);
+            if (usuario.Estado == false && rol.Estado == false)
+            {
+                _response.statusCode = HttpStatusCode.BadRequest;
+                _response.IsExistoso = false;
+                _response.ErrorMessages.Add("Su usuario se encuentra inactivo y no tiene acceso al sistema");
+
+                return BadRequest(_response);
+            }
+
             _response.IsExistoso = true;
             _response.statusCode = HttpStatusCode.OK;
             _response.Resultado = loginResponse;
+            return Ok(_response);
+        }
+
+        [HttpPost("EnviarCorreo")]
+        public async Task<IActionResult> EnviarCorreo(CorreoDto modelo)
+        {
+            var usuario = await _usuarioRepositorio.Obtener(u => u.Correo == modelo.Para);
+            if (usuario == null)
+            {
+                _response.IsExistoso = false;
+                _response.statusCode = HttpStatusCode.NotFound;
+                _response.ErrorMessages.Add("No se encontró un usuario con el correo electrónico proporcionado");
+                return NotFound(_response);
+            }
+
+            await _usuarioRepositorio.EnviarCorreo(modelo);
+
+            _response.IsExistoso = true;
+            _response.statusCode = HttpStatusCode.OK;
+            _response.Resultado = modelo;
 
             return Ok(_response);
+
+        }
+
+        [HttpPost("ResetContraseña")]
+        public async Task<IActionResult> ResetContraseña(ResetPasswordDto modelo)
+        {
+            var usuario = await _usuarioRepositorio.Obtener(u => u.Correo == modelo.Correo);
+
+            if (usuario == null)
+            {
+                _response.IsExistoso = false;
+                _response.statusCode = HttpStatusCode.NotFound;
+                _response.ErrorMessages.Add("No se encontró un usuario con el correo electrónico proporcionado");
+                return NotFound(_response);
+            }
+
+            var passwordHasher = new PasswordHasher<Usuario>();
+            var contrasenaEncriptada = passwordHasher.HashPassword(null, modelo.Contrasena);
+
+            usuario.Contrasena = contrasenaEncriptada;
+
+            await _usuarioRepositorio.Editar(usuario);
+
+            _response.IsExistoso = true;
+            _response.statusCode = HttpStatusCode.OK;
+            _response.Resultado = usuario;
+
+
+            return Ok(_response);
+
+        }
+
+        [HttpPost("{correo}")]
+        [ProducesResponseType(202)]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        public async Task<ActionResult<APIResponse>> ValidarCorreo(string correo)
+        {
+            if (correo == null)
+            {
+                _response.IsExistoso = false;
+                _response.statusCode = HttpStatusCode.BadRequest;
+                return BadRequest(_response);
+            }
+
+            var usuario = await _usuarioRepositorio.Obtener(u => u.Correo == correo);
+
+            if (usuario != null)
+            {
+                _response.IsExistoso = true;
+                _response.statusCode = HttpStatusCode.Accepted;
+                _response.ErrorMessages.Add("Ya existe un empleado con el mismo correo");
+                return Ok(_response);
+            }
+
+            _response.IsExistoso = false;
+            _response.statusCode = HttpStatusCode.NoContent;
+            return Ok(_response);
+
         }
 
         [HttpPost("EnviarCorreo")]

@@ -16,4 +16,6 @@ public partial class Rol
     public virtual ICollection<RolPermiso> RolPermisos { get; set; } = new List<RolPermiso>();
 
     public virtual ICollection<Usuario> Usuarios { get; set; } = new List<Usuario>();
+
+    public bool Estado { get; set; }
 }

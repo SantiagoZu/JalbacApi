@@ -7,6 +7,6 @@ namespace JalbacApi.Repositorio.IRepositorio
     {
         Task<Usuario> CrearUsuario(Usuario usuario);
         Task<LoginResponseDto> Login(LoginRequestDto loginRequestDto, HttpContext httpContext);
-        void EnviarCorreo(CorreoDto correoDto);
+        Task EnviarCorreo(CorreoDto correoDto);
     }
 }

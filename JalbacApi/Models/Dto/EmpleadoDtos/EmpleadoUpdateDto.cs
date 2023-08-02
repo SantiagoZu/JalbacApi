@@ -8,6 +8,8 @@ namespace JalbacApi.Models.Dto.EmpleadoDtos
 
         public int IdUsuario { get; set; }
 
+        public int IdRol { get; set; }
+
         public bool Estado { get; set; }
 
         public string Documento { get; set; } = null!;
@@ -18,5 +20,6 @@ namespace JalbacApi.Models.Dto.EmpleadoDtos
         public string Apellido { get; set; } = null!;
 
         public string Cargo { get; set; } = null!;
+
     }
 }

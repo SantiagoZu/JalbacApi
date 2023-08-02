@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using JalbacApi.Models;
 using JalbacApi.Models.Dto.RolDtos;
+using JalbacApi.Repositorio;
 using JalbacApi.Repositorio.IRepositorio;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
@@ -14,13 +15,17 @@ namespace JalbacApi.Controllers
         private readonly IMapper _mapper;
         private readonly IRolRepositorio _rolRepositorio;
         private readonly IRolPermisoRepositorio _rolPermisoRepositorio;
+        private readonly IEmpleadoRepositorio _empleadoRepositorio;
+        private readonly IUsuarioRepositorio _usuarioRepositorio;
         protected APIResponse _response;
-        public RolController(IMapper mapper, IRolRepositorio rolRepositorio, IRolPermisoRepositorio rolPermisoRepositorio)
+        public RolController(IMapper mapper, IRolRepositorio rolRepositorio, IRolPermisoRepositorio rolPermisoRepositorio, IEmpleadoRepositorio empleadoRepositorio, IUsuarioRepositorio usuarioRepositorio)
         {
             _mapper = mapper;
             _rolRepositorio = rolRepositorio;
             _rolPermisoRepositorio = rolPermisoRepositorio;
             _response = new();
+            _empleadoRepositorio = empleadoRepositorio;
+            _usuarioRepositorio = usuarioRepositorio;
         }
 
         [HttpGet]
@@ -108,6 +113,7 @@ namespace JalbacApi.Controllers
             Rol crearRol = new()
             {
                 Nombre = model.Nombre,
+                Estado = true
             };
 
             await _rolRepositorio.Crear(crearRol);
@@ -143,6 +149,24 @@ namespace JalbacApi.Controllers
                 _response.IsExistoso = false;
                 _response.statusCode = HttpStatusCode.BadRequest;
                 return BadRequest(_response);
+            }
+
+            if (model.Estado == false)
+            {
+                IEnumerable<Usuario> usuario = await _usuarioRepositorio.ObtenerTodos(u => u.IdRol == model.IdRol);
+
+                if (usuario != null)
+                {
+                    foreach (var item in usuario)
+                    {
+                        item.Estado = model.Estado;
+                        await _usuarioRepositorio.Editar(item);
+
+                        var empleado = await _empleadoRepositorio.Obtener(e => e.IdUsuario == item.IdUsuario);
+                        empleado.Estado = model.Estado;
+                        await _empleadoRepositorio.Editar(empleado);
+                    }
+                }
             }
 
             Rol updateRol = new()
@@ -193,6 +217,12 @@ namespace JalbacApi.Controllers
                 return BadRequest(_response);
             }
 
+            var rolPermiso = await _rolPermisoRepositorio.Consultar(rp => rp.IdRol == id);
+            foreach (var item in rolPermiso)
+            {
+                await _rolPermisoRepositorio.Remover(item);
+            }
+
             var rol = await _rolRepositorio.Obtener(c => c.IdRol == id);
 
             if (rol == null)
@@ -210,7 +240,34 @@ namespace JalbacApi.Controllers
             return Ok(_response);
         }
 
+        [HttpPost("{nombre}")]
+        [ProducesResponseType(202)]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        public async Task<ActionResult<APIResponse>> ValidarRol(string nombre)
+        {
+            if (nombre == null)
+            {
+                _response.IsExistoso = false;
+                _response.statusCode = HttpStatusCode.BadRequest;
+                return BadRequest(_response);
+            }
 
+            var rol = await _rolRepositorio.Obtener(c => c.Nombre == nombre);
+
+            if (rol != null)
+            {
+                _response.IsExistoso = true;
+                _response.statusCode = HttpStatusCode.Accepted;
+                _response.ErrorMessages.Add("Ya existe un rol con el mismo nombre");
+                return Ok(_response);
+            }
+
+            _response.IsExistoso = false;
+            _response.statusCode = HttpStatusCode.NoContent;
+            return Ok(_response);
+
+        }
 
     }
 }

@@ -33,7 +33,7 @@ namespace JalbacApi.Controllers
         {
             try
             {
-                IEnumerable<HisEstadoDetallePedido> detallesList = await _hisDetallePedidoRepositorio.ObtenerTodos(incluirPropiedades: "IdEstadoNavigation,IdDetallePedidoNavigation");
+                IEnumerable<HisEstadoDetallePedido> detallesList = await _hisDetallePedidoRepositorio.ObtenerTodos(tracked: false, incluirPropiedades: "IdEstadoNavigation,IdDetallePedidoNavigation");
 
 
                 _response.Resultado = _mapper.Map<IEnumerable<HisEstadoDetallePedidoDto>>(detallesList);
@@ -91,6 +91,36 @@ namespace JalbacApi.Controllers
             }
 
             return _response;
+        }
+
+        [HttpDelete("{id:int}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<ActionResult<APIResponse>> EliminarHisDetallePedido(int id)
+        {
+            if (id == 0)
+            {
+                _response.IsExistoso = false;
+                _response.statusCode = HttpStatusCode.BadRequest;
+                return BadRequest(_response);
+            }
+
+            var histDetallePedido = await _hisDetallePedidoRepositorio.Obtener(c => c.IdHisEstadoDetallePedido == id);
+
+            if (histDetallePedido == null)
+            {
+                _response.IsExistoso = false;
+                _response.statusCode = HttpStatusCode.NotFound;
+                return NotFound(_response);
+            }
+
+            await _hisDetallePedidoRepositorio.Remover(histDetallePedido);
+
+            _response.IsExistoso = true;
+            _response.statusCode = HttpStatusCode.NoContent;
+
+            return Ok(_response);
         }
     }
 }

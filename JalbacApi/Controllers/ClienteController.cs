@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using JalbacApi.Models;
 using JalbacApi.Models.Dto.ClienteDtos;
+using JalbacApi.Repositorio;
 using JalbacApi.Repositorio.IRepositorio;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +9,6 @@ using System.Net;
 
 namespace JalbacApi.Controllers
 {
-    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class ClienteController : ControllerBase
@@ -167,6 +167,35 @@ namespace JalbacApi.Controllers
             _response.statusCode = HttpStatusCode.NoContent;
 
             return Ok(_response);
+        }
+
+        [HttpPost("{documento}")]
+        [ProducesResponseType(202)]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        public async Task<ActionResult<APIResponse>> ValidarDocumento(string documento)
+        {
+            if (documento == null)
+            {
+                _response.IsExistoso = false;
+                _response.statusCode = HttpStatusCode.BadRequest;
+                return BadRequest(_response);
+            }
+
+            var cliente = await _clienteRepositorio.Obtener(c => c.Documento == documento);
+
+            if (cliente != null)
+            {
+                _response.IsExistoso = true;
+                _response.statusCode = HttpStatusCode.Accepted;
+                _response.ErrorMessages.Add("Ya existe un cliente con el mismo documento");
+                return Ok(_response);
+            }
+
+            _response.IsExistoso = false;
+            _response.statusCode = HttpStatusCode.NoContent;
+            return Ok(_response);
+
         }
     }
 }
