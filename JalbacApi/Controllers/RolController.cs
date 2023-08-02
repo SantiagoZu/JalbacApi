@@ -151,6 +151,24 @@ namespace JalbacApi.Controllers
                 return BadRequest(_response);
             }
 
+            if (model.Estado == false)
+            {
+                IEnumerable<Usuario> usuario = await _usuarioRepositorio.ObtenerTodos(u => u.IdRol == model.IdRol);
+
+                if (usuario != null)
+                {
+                    foreach (var item in usuario)
+                    {
+                        item.Estado = model.Estado;
+                        await _usuarioRepositorio.Editar(item);
+
+                        var empleado = await _empleadoRepositorio.Obtener(e => e.IdUsuario == item.IdUsuario);
+                        empleado.Estado = model.Estado;
+                        await _empleadoRepositorio.Editar(empleado);
+                    }
+                }
+            }
+
             Rol updateRol = new()
             {
                 IdRol = id,
@@ -176,21 +194,6 @@ namespace JalbacApi.Controllers
                 };
 
                 await _rolPermisoRepositorio.Crear(crearRolPermiso);
-            }
-
-            if (model.Estado == false)
-            {
-                IEnumerable<Usuario> usuario = await _usuarioRepositorio.ObtenerTodos(u => u.IdRol == model.IdRol);
-
-                foreach (var item in usuario)
-                {
-                    item.Estado = model.Estado;
-                    await _usuarioRepositorio.Editar(item);
-
-                    var empleado = await _empleadoRepositorio.Obtener(e => e.IdUsuario == item.IdUsuario);
-                    empleado.Estado = model.Estado;
-                    await _empleadoRepositorio.Editar(empleado);
-                }
             }
 
             _response.IsExistoso = true;

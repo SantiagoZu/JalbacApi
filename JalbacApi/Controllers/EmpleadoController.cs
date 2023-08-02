@@ -157,20 +157,22 @@ namespace JalbacApi.Controllers
             }
 
             Empleado empleado = _mapper.Map<Empleado>(model);
+            await _empleadoRepositorio.Editar(empleado);
 
-            Usuario usuario = await _usuarioRepositorio.Obtener(u => u.IdUsuario == model.IdUsuario);
+            var usuario = await _usuarioRepositorio.Obtener(u => u.IdUsuario == model.IdUsuario);
 
             if (usuario != null)
             {
                 // Actualizar el correo en el objeto de Usuario
+                usuario.IdRol = model.IdRol;
                 usuario.Correo = model.Correo;
                 usuario.Estado = model.Estado;
-                usuario.IdRol = model.IdRol;
 
                 // Actualizar el objeto de Usuario en la base de datos
                 await _usuarioRepositorio.Editar(usuario);
             }
-            await _empleadoRepositorio.Editar(empleado);
+            
+
             if (model.Estado == true)
             {
                 var rol = await _rolRepositorio.Obtener(r => r.IdRol == usuario.IdRol);

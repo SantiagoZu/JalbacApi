@@ -20,5 +20,6 @@ namespace JalbacApi.Models.Dto.EmpleadoDtos
         public string Apellido { get; set; } = null!;
 
         public string Cargo { get; set; } = null!;
+
     }
 }

@@ -19,12 +19,14 @@ namespace JalbacApi.Controllers
         private readonly IMapper _mapper;
         private readonly IUsuarioRepositorio _usuarioRepositorio;
         private readonly IEmpleadoRepositorio _empleadoRepositorio;
+        private readonly IRolRepositorio _rolRepositorio;
         protected APIResponse _response;
-        public UsuarioController(IMapper mapper, IUsuarioRepositorio usuarioRepositorio, IEmpleadoRepositorio empleadoRepositorio)
+        public UsuarioController(IMapper mapper, IUsuarioRepositorio usuarioRepositorio, IEmpleadoRepositorio empleadoRepositorio, IRolRepositorio rolRepositorio)
         {
             _mapper = mapper;
             _usuarioRepositorio = usuarioRepositorio;
             _empleadoRepositorio = empleadoRepositorio;
+            _rolRepositorio = rolRepositorio;
             _response = new();
         }
 
@@ -198,10 +200,20 @@ namespace JalbacApi.Controllers
                 return BadRequest(_response);
             }
 
+            var usuario = await _usuarioRepositorio.Obtener(u => u.Correo == modelo.Correo);
+            var rol = await _rolRepositorio.Obtener(r => r.IdRol == usuario.IdRol);
+            if (usuario.Estado == false && rol.Estado == false)
+            {
+                _response.statusCode = HttpStatusCode.BadRequest;
+                _response.IsExistoso = false;
+                _response.ErrorMessages.Add("Su usuario se encuentra inactivo y no tiene acceso al sistema");
+
+                return BadRequest(_response);
+            }
+
             _response.IsExistoso = true;
             _response.statusCode = HttpStatusCode.OK;
             _response.Resultado = loginResponse;
-
             return Ok(_response);
         }
 

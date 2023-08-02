@@ -103,7 +103,7 @@ namespace JalbacApi.Repositorio
 
         public async Task EnviarCorreo(CorreoDto correoDto)
         {
-            var apiKey = "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";
+            var apiKey = "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";
             var client = new SendGridClient(apiKey);
             var from = new EmailAddress("jalbacprueba@gmail.com", "JalbacSoft");
             var to = new EmailAddress(correoDto.Para);
