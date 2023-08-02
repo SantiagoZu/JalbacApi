@@ -9,6 +9,8 @@ using System.Text;
 using System.Security.Claims;
 using SendGrid;
 using SendGrid.Helpers.Mail;
+using Microsoft.AspNetCore.Http;
+
 
 namespace JalbacApi.Repositorio
 {
@@ -24,6 +26,7 @@ namespace JalbacApi.Repositorio
             _db = db;
             secretKey = configuration.GetValue<string>("ApiSettings:Secret");
             _config = configuration;
+
         }
 
         public async Task<Usuario> CrearUsuario(Usuario usuario)
@@ -113,5 +116,6 @@ namespace JalbacApi.Repositorio
             var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
             var response = await client.SendEmailAsync(msg);
         }
+
     }
 }

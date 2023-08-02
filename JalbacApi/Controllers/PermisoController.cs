@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using JalbacApi.Models;
 using JalbacApi.Models.Dto.PermisoDtos;
+using JalbacApi.Models.Dto.RolDtos;
 using JalbacApi.Repositorio;
 using JalbacApi.Repositorio.IRepositorio;
 using Microsoft.AspNetCore.Mvc;
@@ -105,6 +106,7 @@ namespace JalbacApi.Controllers
                                                 join p in permiso on rp.IdPermiso equals p.IdPermiso
                                                 where rp.IdRol == idRol
                                                 select p).AsQueryable();
+                                                where rp.IdRol == idRol select p).AsQueryable();
 
                 var listaPermisos = permisos.ToList();
 
