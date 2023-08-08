@@ -17,5 +17,4 @@ public partial class Rol
 
     public virtual ICollection<Usuario> Usuarios { get; set; } = new List<Usuario>();
 
-    public bool Estado { get; set; }
 }

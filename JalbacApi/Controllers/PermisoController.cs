@@ -106,7 +106,6 @@ namespace JalbacApi.Controllers
                                                 join p in permiso on rp.IdPermiso equals p.IdPermiso
                                                 where rp.IdRol == idRol
                                                 select p).AsQueryable();
-                                                where rp.IdRol == idRol select p).AsQueryable();
 
                 var listaPermisos = permisos.ToList();
 

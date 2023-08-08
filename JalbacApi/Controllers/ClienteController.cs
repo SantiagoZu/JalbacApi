@@ -161,6 +161,22 @@ namespace JalbacApi.Controllers
                 return NotFound(_response);
             }
 
+            try
+            {
+                if (cliente.Pedidos.Any())
+                {
+                    _response.IsExistoso = false;
+                    _response.statusCode = HttpStatusCode.BadRequest;
+                    _response.ErrorMessages.Add("El cliente tiene un pedido a su nombre");
+                    return BadRequest(_response);
+                }
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+
             await _clienteRepositorio.Remover(cliente);
 
             _response.IsExistoso = true;
