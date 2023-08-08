@@ -218,11 +218,14 @@ namespace JalbacApi.Controllers
                 {
                     _response.IsExistoso = false;
                     _response.statusCode = HttpStatusCode.BadRequest;
-                    _response.ErrorMessages.Add("El empleado tiene detalles de pedido y no se puede eliminar");
+                    _response.ErrorMessages.Add("El empleado tiene un pedido pendiente");
                     return BadRequest(_response);
                 }
 
+                Usuario usuario = await _usuarioRepositorio.Obtener(u => u.IdUsuario == empleado.IdUsuario);
+
                 await _empleadoRepositorio.Remover(empleado);
+                await _usuarioRepositorio.Remover(usuario);
 
                 _response.IsExistoso = true;
                 _response.statusCode = HttpStatusCode.NoContent;

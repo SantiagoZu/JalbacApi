@@ -34,8 +34,9 @@ namespace JalbacApi.Controllers
         {
             try
             {
-                IEnumerable<DetallePedido> detallesList = await _detalleRepositorio.ObtenerTodos(tracked: false,incluirPropiedades: "IdEmpleadoNavigation,IdEstadoNavigation,IdPedidoNavigation");
+                IEnumerable<DetallePedido> detallesList = await _detalleRepositorio.ObtenerTodos(tracked: false, incluirPropiedades: "IdEmpleadoNavigation,IdEstadoNavigation,IdPedidoNavigation");
 
+                List<DetallePedidoDto> detallesWithDevolucion = new List<DetallePedidoDto>();
                 foreach (var detalle in detallesList)
                 {
                     var motivosDevolucion = await _hisEstadoDetallePedidoRepositorio.ObtenerTodos(dm => dm.IdDetallePedido == detalle.IdDetallePedido);
@@ -45,7 +46,7 @@ namespace JalbacApi.Controllers
                     foreach (var motivo in motivosDevolucion)
                     {
                         motivos.Add(motivo.MotivoDevolucion);
-                        
+
                     }
 
                     DetallePedidoDto detallePedidoDto = new()
@@ -54,6 +55,9 @@ namespace JalbacApi.Controllers
                         IdPedido = detalle.IdPedido,
                         IdEmpleado = detalle.IdEmpleado,
                         IdEstado = detalle.IdEstado,
+                        IdPedidoNavigation = detalle.IdPedidoNavigation,
+                        IdEmpleadoNavigation = detalle.IdEmpleadoNavigation,
+                        IdEstadoNavigation = detalle.IdEstadoNavigation,
                         NombreAnillido = detalle.NombreAnillido,
                         Tipo = detalle.Tipo,
                         Peso = detalle.Peso,
@@ -64,9 +68,10 @@ namespace JalbacApi.Controllers
                         Cantidad = detalle.Cantidad,
                         MotivoDevolucion = motivos
                     };
+                    detallesWithDevolucion.Add(detallePedidoDto);
                 }
 
-                _response.Resultado = _mapper.Map<IEnumerable<DetallePedidoDto>>(detallesList);
+                _response.Resultado = _mapper.Map<IEnumerable<DetallePedidoDto>>(detallesWithDevolucion);
                 _response.statusCode = HttpStatusCode.OK;
                 _response.IsExistoso = true;
 
@@ -192,8 +197,9 @@ namespace JalbacApi.Controllers
 
             await _detalleRepositorio.Editar(detalleOriginal);
 
+            IEnumerable<DetallePedido> detallesList = await _detalleRepositorio.ObtenerTodos(tracked: false, incluirPropiedades: "IdEmpleadoNavigation,IdEstadoNavigation,IdPedidoNavigation");
             _response.IsExistoso = true;
-            _response.Resultado = detalleOriginal;
+            _response.Resultado = new { detalleEdited = detalleOriginal, detallesNuevos = detallesList };
             _response.statusCode = HttpStatusCode.NoContent;
 
             return Ok(_response);

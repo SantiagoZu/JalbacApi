@@ -10,13 +10,13 @@ namespace JalbacApi.Models.Dto.DetallePedidoDtos
         public int IdDetallePedido { get; set; }
 
         public int IdPedido { get; set; }
-        public virtual PedidoDto IdPedidoNavigation { get; set; } = null!;
+        public virtual Pedido IdPedidoNavigation { get; set; } = null!;
 
         public int IdEmpleado { get; set; }
-        public virtual EmpleadoDto IdEmpleadoNavigation { get; set; } = null!;
+        public virtual Empleado IdEmpleadoNavigation { get; set; } = null!;
 
         public int IdEstado { get; set; }
-        public virtual EstadoDto IdEstadoNavigation { get; set; } = null!;
+        public virtual Estado IdEstadoNavigation { get; set; } = null!;
 
         public string NombreAnillido { get; set; } = null!;
 

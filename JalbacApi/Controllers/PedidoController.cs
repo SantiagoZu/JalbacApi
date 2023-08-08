@@ -56,6 +56,53 @@ namespace JalbacApi.Controllers
             return _response;
         }
 
+        [HttpGet("PorEmpleado/{idUsuario:int}", Name = "GetPedidosPorEmpleado")]
+        [ProducesResponseType(200)]
+        public async Task<ActionResult<APIResponse>> GetPedidosPorEmpleado(int idUsuario)
+        {
+            try
+            {
+                IEnumerable<DetallePedido> detallesList = await _detallePedidoRepositorio.ObtenerTodos(e => e.IdEmpleadoNavigation.IdUsuario == idUsuario);
+                IEnumerable<Pedido> pedidosList = await _pedidoRepositorio.ObtenerTodos(incluirPropiedades: "IdClienteNavigation,IdEstadoNavigation");
+                List<PedidosEmpleadoDto> pedidosEmpleadolist = new List<PedidosEmpleadoDto>();
+                List<int> idsPedidosProcesados = new List<int>();
+
+                foreach (var detalle in detallesList)
+                {
+
+                    if (!idsPedidosProcesados.Contains(detalle.IdPedido))
+                    {
+                        var pedido = await _pedidoRepositorio.Obtener(p => p.IdPedido == detalle.IdPedido);
+
+                        PedidosEmpleadoDto pedidoEmpleado = new PedidosEmpleadoDto();
+
+                        pedidoEmpleado.Pedido = _mapper.Map<PedidoDto>(pedido);
+
+
+
+                        idsPedidosProcesados.Add(detalle.IdPedido);
+                        pedidosEmpleadolist.Add(pedidoEmpleado);
+                    }
+                }
+
+
+
+                _response.Resultado = pedidosEmpleadolist;
+                _response.statusCode = HttpStatusCode.OK;
+                _response.IsExistoso = true;
+
+                return Ok(_response);
+            }
+            catch (Exception ex)
+            {
+
+                _response.IsExistoso = false;
+                _response.ErrorMessages = new List<string>() { ex.ToString() };
+            }
+
+            return _response;
+        }
+
         [HttpGet("{id:int}", Name = "GetPedido")]
 
         [ProducesResponseType(200)]
