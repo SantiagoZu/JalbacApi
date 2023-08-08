@@ -134,7 +134,6 @@ namespace JalbacApi.Controllers
         }
 
         [HttpPut("{id:int}")]
-        [Authorize]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         public async Task<ActionResult<APIResponse>> EditarUsuario(int id, [FromBody] UsuarioUpdateDto model)
@@ -293,6 +292,27 @@ namespace JalbacApi.Controllers
 
             _response.IsExistoso = false;
             _response.statusCode = HttpStatusCode.NoContent;
+            return Ok(_response);
+
+        }
+
+        [HttpPost("EnviarCorreo")]
+        public async Task<IActionResult> EnviarCorreo(CorreoDto modelo)
+        {
+            var usuario = await _usuarioRepositorio.Obtener(u => u.Correo == modelo.Para);
+            if (usuario == null)
+            {
+                _response.IsExistoso = false;
+                _response.statusCode = HttpStatusCode.NotFound;
+                return NotFound(_response);
+            }
+
+            _usuarioRepositorio.EnviarCorreo(modelo);
+
+            _response.IsExistoso = true;
+            _response.statusCode = HttpStatusCode.OK;
+            _response.Resultado = modelo;
+
             return Ok(_response);
 
         }

@@ -196,6 +196,7 @@ namespace JalbacApi.Controllers
                 await _rolPermisoRepositorio.Crear(crearRolPermiso);
             }
 
+
             _response.IsExistoso = true;
             _response.Resultado = updateRol;
             _response.statusCode = HttpStatusCode.NoContent;
