@@ -19,11 +19,13 @@ namespace JalbacApi.Controllers
     {
         private readonly IHisEstadoDetallePedidoRepositorio _hisDetallePedidoRepositorio;
         private readonly IMapper _mapper;
+        private readonly IDetallePedidoRepositorio _detallePedidoRepositorio;
         protected APIResponse _response;
-        public HisEstadoDetallePedidoController(IHisEstadoDetallePedidoRepositorio hisDetallePedidoRepositorio, IMapper mapper)
+        public HisEstadoDetallePedidoController(IHisEstadoDetallePedidoRepositorio hisDetallePedidoRepositorio, IMapper mapper, IDetallePedidoRepositorio detallePedidoRepositorio)
         {
             _hisDetallePedidoRepositorio = hisDetallePedidoRepositorio;
             _mapper = mapper;
+            _detallePedidoRepositorio = detallePedidoRepositorio;
             _response = new();
         }
 
@@ -52,32 +54,77 @@ namespace JalbacApi.Controllers
             return _response;
         }
 
-        [HttpGet("{id:int}", Name = "GetHisDetallePedido")]
+        //[HttpGet("{id:int}", Name = "GetHisDetallePedido")]
+        //[ProducesResponseType(200)]
+        //[ProducesResponseType(400)]
+        //[ProducesResponseType(404)]
+        //public async Task<ActionResult<APIResponse>> GetHisDetallePedido(int id)
+        //{
+        //    try
+        //    {
+        //        if (id == 0)
+        //        {
+        //            _response.statusCode = HttpStatusCode.BadRequest;
+        //            _response.IsExistoso = false;
+        //            return BadRequest(_response);
+        //        }
 
+        //        var detalle = await _hisDetallePedidoRepositorio.Obtener(c => c.IdHisEstadoDetallePedido == id, tracked: false, incluirPropiedades: "IdEstadoNavigation,IdDetallePedidoNavigation");
+
+        //        if (detalle == null)
+        //        {
+        //            _response.statusCode = HttpStatusCode.NotFound;
+        //            _response.IsExistoso = false;
+        //            return NotFound(_response);
+        //        }
+
+        //        _response.Resultado = _mapper.Map<HisEstadoDetallePedidoDto>(detalle);
+        //        _response.IsExistoso = true;
+        //        _response.statusCode = HttpStatusCode.OK;
+
+        //        return Ok(_response);
+        //    }
+        //    catch (Exception ex)
+        //    {
+
+        //        _response.IsExistoso = false;
+        //        _response.ErrorMessages = new List<string>() { ex.ToString() };
+        //    }
+
+        //    return _response;
+        //}
+
+        [HttpGet("{idDetalle:int}", Name = "HistorialDetalle")]
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<APIResponse>> GetHisDetallePedido(int id)
+        public async Task<ActionResult<APIResponse>> HistorialDetalle(int idDetalle)
         {
             try
             {
-                if (id == 0)
+                if (idDetalle == 0)
                 {
                     _response.statusCode = HttpStatusCode.BadRequest;
                     _response.IsExistoso = false;
                     return BadRequest(_response);
                 }
 
-                var detalle = await _hisDetallePedidoRepositorio.Obtener(c => c.IdHisEstadoDetallePedido == id, tracked: false, incluirPropiedades: "IdEstadoNavigation,IdDetallePedidoNavigation");
-
+                var detalle = await _detallePedidoRepositorio.Obtener(d => d.IdDetallePedido == idDetalle, tracked: false);
                 if (detalle == null)
                 {
                     _response.statusCode = HttpStatusCode.NotFound;
                     _response.IsExistoso = false;
                     return NotFound(_response);
                 }
+                IEnumerable<HisEstadoDetallePedido> historialesDeDetalle = await _hisDetallePedidoRepositorio.ObtenerTodos(hs => hs.IdDetallePedido == detalle.IdDetallePedido, tracked: false, incluirPropiedades: "IdEstadoNavigation");
 
-                _response.Resultado = _mapper.Map<HisEstadoDetallePedidoDto>(detalle);
+                HistorialesDeDetalleDto historialesDeDetalleDto = new()
+                {
+                    IdDetalle = detalle.IdDetallePedido,
+                    HistorialDetalle = historialesDeDetalle,
+                };
+
+                _response.Resultado = historialesDeDetalleDto;
                 _response.IsExistoso = true;
                 _response.statusCode = HttpStatusCode.OK;
 

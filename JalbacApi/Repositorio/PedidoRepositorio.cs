@@ -19,6 +19,7 @@ namespace JalbacApi.Repositorio
         public async Task<Pedido> CrearPedido(Pedido pedido)
         {
             pedido.FechaPedido = DateTime.Now;
+            pedido.IsActivo = true;
             await _db.AddAsync(pedido);
             await _db.SaveChangesAsync();
 

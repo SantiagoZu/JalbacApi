@@ -4,7 +4,7 @@ namespace JalbacApi.Models.Dto.PedidoDtos
 {
     public class PedidoCreateDto
     {
-        public int IdCliente { get; set; }
+        public string DocumentoCliente { get; set; }
 
         public int IdEstado { get; set; }
 

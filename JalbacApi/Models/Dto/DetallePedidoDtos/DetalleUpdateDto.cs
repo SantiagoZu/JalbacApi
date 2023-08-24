@@ -16,7 +16,7 @@ namespace JalbacApi.Models.Dto.DetallePedidoDtos
 
         public string NombreAnillido { get; set; } = null!;
 
-        public string Tipo { get; set; } = null!;
+        public string Servicio { get; set; } = null!;
 
         public string Peso { get; set; } = null!;
 

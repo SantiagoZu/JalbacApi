@@ -19,13 +19,15 @@ namespace JalbacApi.Controllers
         private readonly IUsuarioRepositorio _usuarioRepositorio;
         private readonly IMapper _mapper;
         private readonly IRolRepositorio _rolRepositorio;
+        private readonly IDetallePedidoRepositorio _detallePedidoRepositorio;
         protected APIResponse _response;
-        public EmpleadoController(IEmpleadoRepositorio empleadoRepositorio, IUsuarioRepositorio usuarioRepositorio, IMapper mapper, IRolRepositorio rolRepositorio)
+        public EmpleadoController(IEmpleadoRepositorio empleadoRepositorio, IUsuarioRepositorio usuarioRepositorio, IMapper mapper, IRolRepositorio rolRepositorio, IDetallePedidoRepositorio detallePedidoRepositorio)
         {
             _empleadoRepositorio = empleadoRepositorio;
             _usuarioRepositorio = usuarioRepositorio;
             _mapper = mapper;
             _rolRepositorio = rolRepositorio;
+            _detallePedidoRepositorio = detallePedidoRepositorio;
             _response = new();
         }
 
@@ -36,7 +38,7 @@ namespace JalbacApi.Controllers
             try
             {
                 IEnumerable<Empleado> empleadosList = await _empleadoRepositorio.ObtenerTodos(incluirPropiedades: "IdUsuarioNavigation");
-
+                empleadosList = empleadosList.OrderBy(e => e.Estado ? 0 : 1).ThenByDescending(e => e.IdEmpleado);
 
                 _response.Resultado = _mapper.Map<IEnumerable<EmpleadoDto>>(empleadosList);
                 _response.statusCode = HttpStatusCode.OK;
@@ -156,6 +158,17 @@ namespace JalbacApi.Controllers
                 return BadRequest(_response);
             }
 
+            var empleadoAEditar = await _empleadoRepositorio.Obtener(e => e.IdEmpleado == id, tracked: false);
+            var detallesDeEmpleado = await _detallePedidoRepositorio.ObtenerTodos(de => de.IdEmpleado ==  model.IdEmpleado, tracked: false);
+
+            if (model.Estado == false && detallesDeEmpleado.Count() > 0)
+            {
+                _response.IsExistoso = false;
+                _response.statusCode = HttpStatusCode.BadRequest;
+                _response.ErrorMessages.Add("El empleado tiene un pedido pendiente");
+                return BadRequest(_response);
+            }
+
             Empleado empleado = _mapper.Map<Empleado>(model);
             await _empleadoRepositorio.Editar(empleado);
 
@@ -180,6 +193,8 @@ namespace JalbacApi.Controllers
                 rol.Estado = model.Estado;
                 await _rolRepositorio.Editar(rol);
             }
+
+            
 
             _response.IsExistoso = true;
             _response.Resultado = empleado;

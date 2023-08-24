@@ -18,11 +18,13 @@ namespace JalbacApi.Controllers
     {
         private readonly IHisEstadoPedidoRepositorio _hisPedidoRepositorio;
         private readonly IMapper _mapper;
+        private readonly IPedidoRepositorio _pedidoRepositorio;
         protected APIResponse _response;
-        public HisEstadoPedidoController(IHisEstadoPedidoRepositorio hisPedidoRepositorio, IMapper mapper)
+        public HisEstadoPedidoController(IHisEstadoPedidoRepositorio hisPedidoRepositorio, IMapper mapper, IPedidoRepositorio pedidoRepositorio)
         {
             _hisPedidoRepositorio = hisPedidoRepositorio;
             _mapper = mapper;
+            _pedidoRepositorio = pedidoRepositorio;
             _response = new();
         }
 
@@ -32,10 +34,24 @@ namespace JalbacApi.Controllers
         {
             try
             {
-                IEnumerable<HisEstadoPedido> pedidosList = await _hisPedidoRepositorio.ObtenerTodos(tracked: false, incluirPropiedades: "IdEstadoNavigation,IdPedidoNavigation");
+                List<HistorialesDePedidoDto> historialesDePedidoDtoList = new List<HistorialesDePedidoDto>();
+                IEnumerable<Pedido> pedidos = await _pedidoRepositorio.ObtenerTodos(tracked: false, incluirPropiedades: "IdClienteNavigation,IdEstadoNavigation");
+                foreach (var pedido in pedidos)
+                {
+                    IEnumerable<HisEstadoPedido> historialesDePedido = await _hisPedidoRepositorio.ObtenerTodos( hp => hp.IdPedido == pedido.IdPedido, incluirPropiedades: "IdEstadoNavigation", tracked: false);
 
+                    HistorialesDePedidoDto hist = new()
+                    {
+                        IdPedido = pedido.IdPedido,
+                        IdPedidoNavigation = _mapper.Map<PedidoDto>(pedido),
+                        HistorialesDePedido = historialesDePedido.ToList(),
+                    };
 
-                _response.Resultado = _mapper.Map<IEnumerable<HisEstadoPedidoDto>>(pedidosList);
+                    historialesDePedidoDtoList.Add(hist);
+                };
+                historialesDePedidoDtoList = historialesDePedidoDtoList.OrderByDescending(h => h.IdPedido).ToList();
+
+                _response.Resultado = historialesDePedidoDtoList;
                 _response.statusCode = HttpStatusCode.OK;
                 _response.IsExistoso = true;
 
@@ -51,36 +67,28 @@ namespace JalbacApi.Controllers
             return _response;
         }
 
-        [HttpGet("{id:int}", Name = "GetHisPedido")]
+        
 
+        [HttpGet("{idPedido:int}", Name = "GetHistorialesPedido")]
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<APIResponse>> GetHisPedido(int id)
+        public async Task<ActionResult<APIResponse>> GetHistorialesDePedido(int idPedido)
         {
             try
             {
-                if (id == 0)
+                var pedido = await _pedidoRepositorio.Obtener(p => p.IdPedido == idPedido, tracked: false);
+                IEnumerable<HisEstadoPedido> historialesDePedido = await _hisPedidoRepositorio.ObtenerTodos(hp => hp.IdPedido == pedido.IdPedido, tracked: false);
+
+                HistorialesDePedidoDto historialesDePedidoDto = new()
                 {
-                    _response.statusCode = HttpStatusCode.BadRequest;
-                    _response.IsExistoso = false;
-                    return BadRequest(_response);
-                }
+                    IdPedido = pedido.IdPedido,
+                    HistorialesDePedido = historialesDePedido
+                };
 
-                var pedido = await _hisPedidoRepositorio.Obtener(c => c.IdHisEstadoPedido == id, tracked: false, incluirPropiedades: "IdEstadoNavigation,IdPedidoNavigation");
-
-                if (pedido == null)
-                {
-                    _response.statusCode = HttpStatusCode.NotFound;
-                    _response.IsExistoso = false;
-                    return NotFound(_response);
-                }
-
-                _response.Resultado = _mapper.Map<HisEstadoPedidoDto>(pedido);
                 _response.IsExistoso = true;
                 _response.statusCode = HttpStatusCode.OK;
-
-                return Ok(_response);
+                _response.Resultado = historialesDePedidoDto;
             }
             catch (Exception ex)
             {

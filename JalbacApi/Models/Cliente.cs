@@ -16,7 +16,7 @@ public partial class Cliente
 
     public string Telefono { get; set; } = null!;
 
-    public bool? Estado { get; set; }
+    public bool Estado { get; set; }
 
     public virtual ICollection<Pedido> Pedidos { get; set; } = new List<Pedido>();
 }

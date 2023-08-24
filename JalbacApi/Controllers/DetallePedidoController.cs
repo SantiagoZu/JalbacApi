@@ -8,6 +8,7 @@ using JalbacApi.Repositorio.IRepositorio;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.Net;
 
 namespace JalbacApi.Controllers
@@ -18,11 +19,13 @@ namespace JalbacApi.Controllers
     {
         private readonly IDetallePedidoRepositorio _detalleRepositorio;
         private readonly IHisEstadoDetallePedidoRepositorio _hisEstadoDetallePedidoRepositorio;
+        private readonly IEmpleadoRepositorio _empleadoRepositorio;
         private readonly IMapper _mapper;
         protected APIResponse _response;
-        public DetallePedidoController(IDetallePedidoRepositorio detalleRepositorio,IHisEstadoDetallePedidoRepositorio hisEstadoDetallePedidoRepositorio, IMapper mapper)
+        public DetallePedidoController(IDetallePedidoRepositorio detalleRepositorio, IHisEstadoDetallePedidoRepositorio hisEstadoDetallePedidoRepositorio, IEmpleadoRepositorio empleadoRepositorio, IMapper mapper)
         {
             _detalleRepositorio = detalleRepositorio;
+            _empleadoRepositorio = empleadoRepositorio;
             _hisEstadoDetallePedidoRepositorio = hisEstadoDetallePedidoRepositorio;
             _mapper = mapper;
             _response = new();
@@ -59,7 +62,7 @@ namespace JalbacApi.Controllers
                         IdEmpleadoNavigation = detalle.IdEmpleadoNavigation,
                         IdEstadoNavigation = detalle.IdEstadoNavigation,
                         NombreAnillido = detalle.NombreAnillido,
-                        Tipo = detalle.Tipo,
+                        Servicio = detalle.Tipo,
                         Peso = detalle.Peso,
                         TamanoAnillo = detalle.TamanoAnillo,
                         TamanoPiedra = detalle.TamanoPiedra,
@@ -144,10 +147,20 @@ namespace JalbacApi.Controllers
                 return BadRequest(model);
             }
 
+            List<int> listEmpleadoIds = new List<int>();
+
+            foreach (var detalle in model)
+            {
+                var empleado = await _empleadoRepositorio.Obtener(empleado => empleado.Documento == detalle.DocumentoEmpleado, tracked: false);
+                listEmpleadoIds.Add(empleado.IdEmpleado);
+            }
             List<DetallePedido> detalles = _mapper.Map<List<DetallePedido>>(model);
+
+            int indexEmpleadoIds = 0;
 
             foreach (DetallePedido detalle in detalles)
             {
+                detalle.IdEmpleado = listEmpleadoIds[indexEmpleadoIds];
                 await _detalleRepositorio.Crear(detalle);
                 HisEstadoDetallePedido hisEstadoDetallePedido = new()
                 {
@@ -157,6 +170,7 @@ namespace JalbacApi.Controllers
                 };
 
                 await _hisEstadoDetallePedidoRepositorio.CrearHisDetallePedido(hisEstadoDetallePedido);
+                indexEmpleadoIds++;
             }
 
             _response.IsExistoso = true;
@@ -199,7 +213,7 @@ namespace JalbacApi.Controllers
 
             IEnumerable<DetallePedido> detallesList = await _detalleRepositorio.ObtenerTodos(tracked: false, incluirPropiedades: "IdEmpleadoNavigation,IdEstadoNavigation,IdPedidoNavigation");
             _response.IsExistoso = true;
-            _response.Resultado = new { detalleEdited = detalleOriginal, detallesNuevos = detallesList };
+            _response.Resultado = new { detalleEdited = detalleOriginal, detallesActualizados = detallesList };
             _response.statusCode = HttpStatusCode.NoContent;
 
             return Ok(_response);

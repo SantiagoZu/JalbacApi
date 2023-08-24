@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using JalbacApi.Models;
 using JalbacApi.Models.Dto.ClienteDtos;
+using JalbacApi.Models.Dto.DetallePedidoDtos;
 using JalbacApi.Models.Dto.PedidoDtos;
 using JalbacApi.Repositorio;
 using JalbacApi.Repositorio.IRepositorio;
@@ -11,6 +12,7 @@ using System.Net;
 
 namespace JalbacApi.Controllers
 {
+
     [Route("api/[controller]")]
     [ApiController]
     public class PedidoController : ControllerBase
@@ -19,14 +21,18 @@ namespace JalbacApi.Controllers
         private readonly IDetallePedidoRepositorio _detallePedidoRepositorio;
         private readonly IHisEstadoPedidoRepositorio _hisEstadoPedidoRepositorio;
         private readonly IHisEstadoDetallePedidoRepositorio _hisEstadoDetallePedidoRepositorio;
+        private readonly IEmpleadoRepositorio _empleadoRepositorio;
+        private readonly IClienteRepositorio _clienteRepositorio;
         private readonly IMapper _mapper;
         protected APIResponse _response;
-        public PedidoController(IPedidoRepositorio pedidoRepositorio, IDetallePedidoRepositorio detallePedidoRepositorio, IHisEstadoPedidoRepositorio hisEstadoPedido, IHisEstadoDetallePedidoRepositorio hisEstadoDetallePedidoRepositorio,IMapper mapper)
+        public PedidoController(IPedidoRepositorio pedidoRepositorio, IDetallePedidoRepositorio detallePedidoRepositorio, IHisEstadoPedidoRepositorio hisEstadoPedido, IHisEstadoDetallePedidoRepositorio hisEstadoDetallePedidoRepositorio, IEmpleadoRepositorio empleadoRepositorio, IClienteRepositorio clienteRepositorio, IMapper mapper)
         {
             _pedidoRepositorio = pedidoRepositorio;
             _detallePedidoRepositorio = detallePedidoRepositorio;
             _hisEstadoPedidoRepositorio = hisEstadoPedido;
+            _empleadoRepositorio = empleadoRepositorio;
             _hisEstadoDetallePedidoRepositorio = hisEstadoDetallePedidoRepositorio;
+            _clienteRepositorio = clienteRepositorio;
             _mapper = mapper;
             _response = new();
         }
@@ -37,60 +43,16 @@ namespace JalbacApi.Controllers
         {
             try
             {
+
                 IEnumerable<Pedido> pedidosList = await _pedidoRepositorio.ObtenerTodos(incluirPropiedades: "IdClienteNavigation,IdEstadoNavigation");
+
+                pedidosList = pedidosList.OrderBy(pedido => pedido.IsActivo ? 0 : 1).ThenByDescending(pedido => pedido.IdPedido);
 
 
                 _response.Resultado = _mapper.Map<IEnumerable<PedidoDto>>(pedidosList);
                 _response.statusCode = HttpStatusCode.OK;
                 _response.IsExistoso = true;
-
-                return Ok(_response);
-            }
-            catch (Exception ex)
-            {
-
-                _response.IsExistoso = false;
-                _response.ErrorMessages = new List<string>() { ex.ToString() };
-            }
-
-            return _response;
-        }
-
-        [HttpGet("PorEmpleado/{idUsuario:int}", Name = "GetPedidosPorEmpleado")]
-        [ProducesResponseType(200)]
-        public async Task<ActionResult<APIResponse>> GetPedidosPorEmpleado(int idUsuario)
-        {
-            try
-            {
-                IEnumerable<DetallePedido> detallesList = await _detallePedidoRepositorio.ObtenerTodos(e => e.IdEmpleadoNavigation.IdUsuario == idUsuario);
-                IEnumerable<Pedido> pedidosList = await _pedidoRepositorio.ObtenerTodos(incluirPropiedades: "IdClienteNavigation,IdEstadoNavigation");
-                List<PedidosEmpleadoDto> pedidosEmpleadolist = new List<PedidosEmpleadoDto>();
-                List<int> idsPedidosProcesados = new List<int>();
-
-                foreach (var detalle in detallesList)
-                {
-
-                    if (!idsPedidosProcesados.Contains(detalle.IdPedido))
-                    {
-                        var pedido = await _pedidoRepositorio.Obtener(p => p.IdPedido == detalle.IdPedido);
-
-                        PedidosEmpleadoDto pedidoEmpleado = new PedidosEmpleadoDto();
-
-                        pedidoEmpleado.Pedido = _mapper.Map<PedidoDto>(pedido);
-
-
-
-                        idsPedidosProcesados.Add(detalle.IdPedido);
-                        pedidosEmpleadolist.Add(pedidoEmpleado);
-                    }
-                }
-
-
-
-                _response.Resultado = pedidosEmpleadolist;
-                _response.statusCode = HttpStatusCode.OK;
-                _response.IsExistoso = true;
-
+                
                 return Ok(_response);
             }
             catch (Exception ex)
@@ -143,7 +105,52 @@ namespace JalbacApi.Controllers
 
             return _response;
         }
+        [HttpGet("PorEmpleado/{idUsuario:int}", Name = "GetPedidosPorEmpleado")]
+        [ProducesResponseType(200)]
+        public async Task<ActionResult<APIResponse>> GetPedidosPorEmpleado(int idUsuario)
+        {
+            try
+            {
+                IEnumerable<DetallePedido> detallesList = await _detallePedidoRepositorio.ObtenerTodos(e => e.IdEmpleadoNavigation.IdUsuario == idUsuario);
+                IEnumerable<Pedido> pedidosList = await _pedidoRepositorio.ObtenerTodos(incluirPropiedades: "IdClienteNavigation,IdEstadoNavigation");
+                List<PedidoDto> pedidosEmpleadolist = new List<PedidoDto>();
+                List<int> idsPedidosProcesados = new List<int>();
 
+                foreach (var detalle in detallesList)
+                {
+
+                    if (!idsPedidosProcesados.Contains(detalle.IdPedido))
+                    {
+                        var pedido = await _pedidoRepositorio.Obtener(p => p.IdPedido == detalle.IdPedido);
+
+                        PedidoDto pedidoEmpleado = new PedidoDto();
+
+                        pedidoEmpleado = _mapper.Map<PedidoDto>(pedido);
+
+
+
+                        idsPedidosProcesados.Add(detalle.IdPedido);
+                        pedidosEmpleadolist.Add(pedidoEmpleado);
+                    }
+                }
+
+
+
+                _response.Resultado = pedidosEmpleadolist.OrderBy(pedido => pedido.IsActivo ? 0 : 1).ThenByDescending(pedido => pedido.IdPedido);
+                _response.statusCode = HttpStatusCode.OK;
+                _response.IsExistoso = true;
+
+                return Ok(_response);
+            }
+            catch (Exception ex)
+            {
+
+                _response.IsExistoso = false;
+                _response.ErrorMessages = new List<string>() { ex.ToString() };
+            }
+
+            return _response;
+        }
         [HttpPost]
         [ProducesResponseType(201)]
         [ProducesResponseType(400)]
@@ -160,9 +167,11 @@ namespace JalbacApi.Controllers
                 return BadRequest(model);
             }
 
+            var cliente = await _clienteRepositorio.Obtener(cliente => cliente.Documento == model.DocumentoCliente);
+
             Pedido pedido = new()
             {
-                IdCliente = model.IdCliente,
+                IdCliente = cliente.IdCliente,
                 IdEstado = model.IdEstado,
                 FechaEntrega = DateTime.Parse(model.FechaEntrega),
             };
@@ -171,10 +180,11 @@ namespace JalbacApi.Controllers
 
             foreach (var item in model.DetallesPedido)
             {
+                var empleado = await _empleadoRepositorio.Obtener(empleado => empleado.Documento == item.DocumentoEmpleado, tracked: false);
                 DetallePedido detallePedido = new()
                 {
                     IdPedido = pedido.IdPedido,
-                    IdEmpleado = item.IdEmpleado,
+                    IdEmpleado = empleado.IdEmpleado,
                     IdEstado = item.IdEstado,
                     NombreAnillido = item.NombreAnillido,
                     Tipo = item.Tipo,
@@ -283,5 +293,6 @@ namespace JalbacApi.Controllers
 
             return Ok(_response);
         }
+
     }
 }

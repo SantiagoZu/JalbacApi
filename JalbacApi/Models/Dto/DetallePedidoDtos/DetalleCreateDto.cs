@@ -8,7 +8,7 @@ namespace JalbacApi.Models.Dto.DetallePedidoDtos
     {
         public int IdPedido { get; set; }
 
-        public int IdEmpleado { get; set; }
+        public string DocumentoEmpleado { get; set; }
 
         public int IdEstado { get; set; }
 

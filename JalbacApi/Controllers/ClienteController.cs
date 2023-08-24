@@ -5,6 +5,7 @@ using JalbacApi.Repositorio;
 using JalbacApi.Repositorio.IRepositorio;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Net;
 
 namespace JalbacApi.Controllers
@@ -15,11 +16,13 @@ namespace JalbacApi.Controllers
     {
         private readonly IMapper _mapper;
         private readonly IClienteRepositorio _clienteRepositorio;
+        private readonly IPedidoRepositorio _pedidoRepositorio;
         protected APIResponse _response;
-        public ClienteController(IMapper mapper, IClienteRepositorio clienteRepositorio)
+        public ClienteController(IMapper mapper, IClienteRepositorio clienteRepositorio, IPedidoRepositorio pedidoRepositorio)
         {
             _mapper = mapper;
             _clienteRepositorio = clienteRepositorio;
+            _pedidoRepositorio = pedidoRepositorio;
             _response = new ();
         }
 
@@ -30,6 +33,7 @@ namespace JalbacApi.Controllers
             try
             {
                 IEnumerable<Cliente> clientesList = await _clienteRepositorio.ObtenerTodos();
+                clientesList = clientesList.OrderBy(c => c.Estado ? 0 : 1).ThenByDescending(c => c.IdCliente);
 
 
                 _response.Resultado = _mapper.Map<IEnumerable<ClienteDto>>(clientesList);
@@ -128,6 +132,16 @@ namespace JalbacApi.Controllers
                 return BadRequest(_response);
             }
 
+            var clienteAEditar = await _clienteRepositorio.Obtener(c => c.IdCliente == id, tracked: false);
+            var pedidosCliente = await _pedidoRepositorio.ObtenerTodos(pc => pc.IdCliente == model.IdCliente, tracked: false);
+            if (model.Estado == false && pedidosCliente.Count() > 0)
+            {
+                _response.IsExistoso = false;
+                _response.statusCode = HttpStatusCode.BadRequest;
+                _response.ErrorMessages.Add("El cliente tiene un pedido a su nombre");
+                return BadRequest(_response);
+            }
+
             Cliente cliente = _mapper.Map<Cliente>(model);
 
             await _clienteRepositorio.Editar(cliente);
@@ -163,26 +177,33 @@ namespace JalbacApi.Controllers
 
             try
             {
-                if (cliente.Pedidos.Any())
+                var pedidosCliente = await _pedidoRepositorio.ObtenerTodos(pc => pc.IdCliente == cliente.IdCliente, tracked: false);
+
+
+                if (pedidosCliente.Count() > 0)
                 {
                     _response.IsExistoso = false;
                     _response.statusCode = HttpStatusCode.BadRequest;
                     _response.ErrorMessages.Add("El cliente tiene un pedido a su nombre");
                     return BadRequest(_response);
                 }
+
+                await _clienteRepositorio.Remover(cliente);
+
+                _response.IsExistoso = true;
+                _response.statusCode = HttpStatusCode.NoContent;
+                return Ok(_response);
+
             }
-            catch (Exception)
+            catch (DbUpdateException)
             {
-
-                throw;
+                _response.IsExistoso = false;
+                _response.statusCode = HttpStatusCode.BadRequest;
+                _response.ErrorMessages.Add("No se puede eliminar el cliente debido a un error interno.");
+                return BadRequest(_response);
             }
 
-            await _clienteRepositorio.Remover(cliente);
-
-            _response.IsExistoso = true;
-            _response.statusCode = HttpStatusCode.NoContent;
-
-            return Ok(_response);
+            
         }
 
         [HttpPost("{documento}")]

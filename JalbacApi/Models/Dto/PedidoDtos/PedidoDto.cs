@@ -17,5 +17,6 @@ namespace JalbacApi.Models.Dto.PedidoDtos
         public DateTime FechaPedido { get; set; }
 
         public DateTime FechaEntrega { get; set; }
+        public bool IsActivo { get; set; }
     }
 }

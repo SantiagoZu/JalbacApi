@@ -194,7 +194,7 @@ namespace JalbacApi.Controllers
             {
                 _response.statusCode = HttpStatusCode.BadRequest;
                 _response.IsExistoso = false;
-                _response.ErrorMessages.Add("UserName o Password son incorrectos");
+                _response.ErrorMessages.Add("Correo o contraseña incorrectos");
 
                 return BadRequest(_response);
             }
@@ -296,26 +296,7 @@ namespace JalbacApi.Controllers
 
         }
 
-        [HttpPost("EnviarCorreo")]
-        public async Task<IActionResult> EnviaCorreo(CorreoDto modelo)
-        {
-            var usuario = await _usuarioRepositorio.Obtener(u => u.Correo == modelo.Para);
-            if (usuario == null)
-            {
-                _response.IsExistoso = false;
-                _response.statusCode = HttpStatusCode.NotFound;
-                return NotFound(_response);
-            }
-
-            await _usuarioRepositorio.EnviarCorreo(modelo);
-
-            _response.IsExistoso = true;
-            _response.statusCode = HttpStatusCode.OK;
-            _response.Resultado = modelo;
-
-            return Ok(_response);
-
-        }
+        
 
     }
 }
