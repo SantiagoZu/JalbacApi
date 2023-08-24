@@ -217,7 +217,7 @@ namespace JalbacApi.Controllers
                 return BadRequest(_response);
             }
 
-            var usuario = await _usuarioRepositorio.Consultar(u => u.IdRol == id);
+            var usuario = await _usuarioRepositorio.Obtener(u => u.IdRol == id);
             if(usuario != null)
             {
                 _response.statusCode = HttpStatusCode.BadRequest;
