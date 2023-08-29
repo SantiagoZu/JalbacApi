@@ -222,7 +222,7 @@ namespace JalbacApi.Controllers
             {
                 _response.statusCode = HttpStatusCode.BadRequest;
                 _response.IsExistoso = false;
-                _response.ErrorMessages.Add("El rol esta relacionado a un usuario y no se puede eliminar");
+                _response.ErrorMessages.Add("El rol esta relacionado a un usuario y no se puede eliminar.");
                 return BadRequest(_response);
             }
 
