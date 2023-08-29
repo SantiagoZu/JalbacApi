@@ -217,12 +217,16 @@ namespace JalbacApi.Controllers
                 return BadRequest(_response);
             }
 
-            var rolPermiso = await _rolPermisoRepositorio.Consultar(rp => rp.IdRol == id);
-            foreach (var item in rolPermiso)
+            var usuario = await _usuarioRepositorio.Obtener(u => u.IdRol == id);
+            if (usuario != null)
             {
-                await _rolPermisoRepositorio.Remover(item);
+                _response.statusCode = HttpStatusCode.BadRequest;
+                _response.IsExistoso = false;
+                _response.ErrorMessages.Add("El rol esta relacionado a un usuario y no se puede eliminar");
+                return BadRequest(_response);
             }
 
+            var rolPermiso = await _rolPermisoRepositorio.Consultar(rp => rp.IdRol == id);
             var rol = await _rolRepositorio.Obtener(c => c.IdRol == id);
 
             if (rol == null)
@@ -230,6 +234,10 @@ namespace JalbacApi.Controllers
                 _response.IsExistoso = false;
                 _response.statusCode = HttpStatusCode.NotFound;
                 return NotFound(_response);
+            }
+            foreach (var item in rolPermiso)
+            {
+                await _rolPermisoRepositorio.Remover(item);
             }
 
             await _rolRepositorio.Remover(rol);
@@ -239,6 +247,7 @@ namespace JalbacApi.Controllers
 
             return Ok(_response);
         }
+
 
         [HttpPost("{nombre}")]
         [ProducesResponseType(202)]

@@ -17,6 +17,7 @@ public partial class Pedido
     public DateTime FechaEntrega { get; set; }
 
     public bool IsActivo { get; set; }
+    public string MotivoInactivacion { get; set; } = null;
 
     public virtual ICollection<DetallePedido> DetallePedidos { get; set; } = new List<DetallePedido>();
 
