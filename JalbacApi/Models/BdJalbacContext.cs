@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System.IO;
+using SendGrid.Helpers.Mail;
 
 namespace JalbacApi.Models;
 
@@ -36,6 +40,8 @@ public partial class BdJalbacContext : DbContext
     public virtual DbSet<RolPermiso> RolPermisos { get; set; }
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
+
+    public virtual DbSet<Backup> Backups { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -329,8 +335,56 @@ public partial class BdJalbacContext : DbContext
                 .HasConstraintName("FK_usuarioRol");
         });
 
+        modelBuilder.Entity<Backup>(entity =>
+        {
+            entity.HasKey(e => e.IdBackup);
+
+            entity.ToTable("backup");
+
+            entity.Property(e => e.IdBackup).HasColumnName("idBackup");
+            entity.Property(e => e.FechaBackup)
+                .HasColumnType("date")
+                .HasColumnName("fechaBackup");
+            entity.Property(e => e.IdEmpleado).HasColumnName("idEmpleado");
+
+            entity.HasOne(d => d.IdEmpleadoNavigation).WithOne()
+               .HasForeignKey<Backup>(d => d.IdEmpleado)
+               .OnDelete(DeleteBehavior.ClientSetNull)
+               .HasConstraintName("FK_backupEmpleado");
+        });
+
         OnModelCreatingPartial(modelBuilder);
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+
+    //public byte[] RealizarBackup()
+    //{
+    //        var backupDataParam = new SqlParameter("@BackupData", SqlDbType.VarBinary, -1); //-1 indica que puede almacenar datos de longitud variable, como datos binarios papu
+    //        backupDataParam.Direction = ParameterDirection.Output; //Esto significa que el parámetro se usará para capturar valores de salida del procedimiento almacenado en lugar de proporcionar valores de entrada.
+
+    //        Database.ExecuteSqlRaw("EXEC sp_GenerarBackup @BackupData OUTPUT", backupDataParam);
+
+    //        if (backupDataParam.Value != DBNull.Value)
+    //        {
+    //            var backupBytes = (byte[])backupDataParam.Value;
+    //            return backupBytes;
+    //        } 
+    //        else
+    //        {
+    //            return null;
+    //        }
+    //}
+
+    //public RealizarBackup()
+    //{
+    //    //string carpeta = "Bak";
+    //    //string ruta = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, carpeta);
+    //    //var PathParam = new SqlParameter("@FilePath", SqlDbType.NVarChar, 255);
+    //    //PathParam.Value = ruta;
+
+        
+
+    //    //return backupData;
+    //}
 }
