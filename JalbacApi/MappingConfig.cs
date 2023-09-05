@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using JalbacApi.Models;
+using JalbacApi.Models.Dto.BackupDtos;
 using JalbacApi.Models.Dto.ClienteDtos;
 using JalbacApi.Models.Dto.DetallePedidoDtos;
 using JalbacApi.Models.Dto.EmpleadoDtos;
@@ -66,7 +67,10 @@ namespace JalbacApi
             CreateMap<Permiso, PermisoDto>().ReverseMap();
             #endregion
 
-
+            #region BackupDto
+            CreateMap<Backup, BackupDto>().ReverseMap();
+            CreateMap<Backup, BackupCreateDto>().ReverseMap();
+            #endregion
         }
     }
 }

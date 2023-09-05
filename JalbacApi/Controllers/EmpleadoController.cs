@@ -165,7 +165,7 @@ namespace JalbacApi.Controllers
             {
                 _response.IsExistoso = false;
                 _response.statusCode = HttpStatusCode.BadRequest;
-                _response.ErrorMessages.Add("El empleado tiene un pedido pendiente");
+                _response.ErrorMessages.Add("El empleado está relacionado con un pedido");
                 return BadRequest(_response);
             }
 
@@ -233,7 +233,7 @@ namespace JalbacApi.Controllers
                 {
                     _response.IsExistoso = false;
                     _response.statusCode = HttpStatusCode.BadRequest;
-                    _response.ErrorMessages.Add("El empleado tiene un pedido pendiente");
+                    _response.ErrorMessages.Add("El empleado está relacionado con un pedido");
                     return BadRequest(_response);
                 }
 

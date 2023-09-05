@@ -36,6 +36,7 @@ public partial class BdJalbacContext : DbContext
     public virtual DbSet<RolPermiso> RolPermisos { get; set; }
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
+    public virtual DbSet<Backup> Backups { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -327,6 +328,24 @@ public partial class BdJalbacContext : DbContext
                 .HasForeignKey(d => d.IdRol)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_usuarioRol");
+        });
+
+        modelBuilder.Entity<Backup>(entity =>
+        {
+            entity.HasKey(e => e.IdBackup);
+
+            entity.ToTable("backup");
+
+            entity.Property(e => e.IdBackup).HasColumnName("idBackup");
+            entity.Property(e => e.FechaBackup)
+                .HasColumnType("date")
+                .HasColumnName("fechaBackup");
+            entity.Property(e => e.IdEmpleado).HasColumnName("idEmpleado");
+
+            entity.HasOne(d => d.IdEmpleadoNavigation).WithOne()
+               .HasForeignKey<Backup>(d => d.IdEmpleado)
+               .OnDelete(DeleteBehavior.ClientSetNull)
+               .HasConstraintName("FK_backupEmpleado");
         });
 
         OnModelCreatingPartial(modelBuilder);

@@ -38,6 +38,7 @@ builder.Services.AddScoped<IHisEstadoDetallePedidoRepositorio, HisEstadoDetalleP
 builder.Services.AddScoped<IHisEstadoPedidoRepositorio, HisEstadoPedidoRepositorio>();
 builder.Services.AddScoped<IPermisoRepositorio, PermisoRepositorio>();
 builder.Services.AddScoped<IRolPermisoRepositorio, RolPermisoRepositorio>();
+builder.Services.AddScoped<IBackupRepositorio, BackupRepositorio>();
 builder.Services.AddHttpContextAccessor();
 
 
