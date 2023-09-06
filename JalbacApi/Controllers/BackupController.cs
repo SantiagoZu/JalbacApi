@@ -45,7 +45,7 @@ namespace JalbacApi.Controllers
         {
             try
             {
-                IEnumerable<Backup> backupList = await _backupRepositorio.ObtenerTodos(incluirPropiedades: "IdEmpleadoNavigation");
+                IEnumerable<Backup> backupList = await _backupRepositorio.ObtenerTodos(incluirPropiedades: "IdEmpleadoNavigation", tracked: false);
 
                 _response.Resultado = _mapper.Map<IEnumerable<BackupDto>>(backupList);
                 _response.statusCode = HttpStatusCode.OK;
@@ -117,6 +117,12 @@ namespace JalbacApi.Controllers
 
                 var backupNombre = "Backup.bak";
                 var BackupRuta = Path.Combine(backupFolderPath, backupNombre);
+
+                if (System.IO.File.Exists(BackupRuta))
+                {
+                    System.IO.File.Delete(BackupRuta);
+                }
+
 
                 using (var connection = new SqlConnection(_configuration.GetConnectionString("defaultConnection")))
                 {
